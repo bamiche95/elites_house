@@ -1,0 +1,33 @@
+# Files excluded from `vercel deploy` uploads.
+# The Git integration already honours .gitignore; this keeps CLI deploys equally clean.
+
+# secrets — never upload local env files
+.env
+.env.*
+!.env.example
+
+# tooling / vcs
+.git
+.gitignore
+.vercel
+
+# dependencies & build output
+node_modules
+.next
+out
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# generated service worker (rebuilt by next-pwa on Vercel)
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
+public/swe-worker-*.js
+public/fallback-*.js
+
+# local database files & logs
+prisma/*.db
+prisma/*.db-journal
+*.log

@@ -132,7 +132,7 @@ Vercel → Settings → Environment Variables in production.
 | Variable          | Notes                                                                    |
 | ----------------- | ------------------------------------------------------------------------ |
 | `DATABASE_URL`    | PostgreSQL connection string (Prisma Postgres, Neon, Supabase, RDS…).    |
-| `DIRECT_URL`      | Optional non-pooled URL used by `prisma migrate`. Defaults to the above. |
+| `DIRECT_URL`      | Non-pooled URL (`db.prisma.io`) used by `prisma migrate` / `db push` / `studio`. Set it in Vercel too so CI migrations reuse the same values. |
 | `NEXTAUTH_SECRET` | 32-byte random string used to sign JWTs and email/verify tokens.         |
 | `NEXTAUTH_URL`    | Public origin, e.g. `https://lushtresses.com` (no trailing slash).       |
 
@@ -282,17 +282,20 @@ deliveries are absorbed by the unique `PaymentTransaction.providerRef` and by an
 
 ## Stock expiry cron
 
-`vercel.json` schedules `/api/cron/expire-orders` every 30 minutes:
+`vercel.json` schedules `/api/cron/expire-orders` once a day at 03:00 UTC — the cadence Vercel's
+**Hobby** plan allows:
 
 ```json
-{ "crons": [{ "path": "/api/cron/expire-orders", "schedule": "*/30 * * * *" }] }
+{ "crons": [{ "path": "/api/cron/expire-orders", "schedule": "0 3 * * *" }] }
 ```
 
+- Unpaid orders older than the expiry window are cancelled and their stock released, so a daily
+  sweep is sufficient. On **Pro** you can tighten it to `0 * * * *` (hourly) or `*/30 * * * *`;
+  on Hobby any sub-daily expression fails the deployment with *"Hobby plans can only run cron jobs
+  once per day"*.
 - Vercel sends `Authorization: Bearer $CRON_SECRET` automatically once `CRON_SECRET` is set.
 - In production the route returns `503` when `CRON_SECRET` is missing, so the job can never be
   triggered anonymously.
-- Vercel **Hobby** plans only allow daily crons — change the schedule to `0 3 * * *` (or use an
-  external scheduler) if you deploy on Hobby.
 - On other hosts simply call the URL from cron/systemd with the same header.
 
 ---
@@ -369,29 +372,49 @@ scripts/generate-icons.mjs      sharp-based brand asset generator
 
 ## Deploying to Vercel
 
-1. **Push the repository** to GitHub/GitLab and import it in Vercel. The Next.js preset is
-   detected automatically; `vercel.json` pins the build command
-   (`prisma generate && next build`) and the expiry cron.
-2. **Add environment variables** (Project → Settings → Environment Variables) — copy
-   `.env.example` and set at least:
+The project deploys through the Vercel **Git integration**: pushes to `main` go to production, every
+other branch produces a preview. `vercel.json` pins the build command
+(`prisma generate && next build`), the function region (`cdg1`, next to the Paris database) and the
+daily expiry cron. Import the repo once in Vercel (Add New → Project) — the Next.js preset is
+detected automatically.
+
+> **Order matters.** `/`, `/faq` and every CMS page (`/about`, `/privacy`, …) are prerendered from
+> the database at build time, so an unmigrated or empty database fails the deployment with
+> *"The table public.Page does not exist"*. Do step 2 before the first build.
+
+1. **Collect the credentials.** In Prisma Postgres → *Connect* you get a pooled string (used by the
+   app) and a direct one (used by migrations). Rotate the password first if an older one was shared.
+2. **Migrate and seed the production database** once, from your machine, against the production
+   URLs:
+
+   ```bash
+   $env:DATABASE_URL="postgres://…@pooled.db.prisma.io:5432/postgres?sslmode=require"
+   $env:DIRECT_URL="postgres://…@db.prisma.io:5432/postgres?sslmode=require"
+   $env:SEED_ADMIN_EMAIL="you@yourdomain.com"; $env:SEED_ADMIN_PASSWORD="<strong-password>"
+
+   npx prisma migrate deploy    # applies prisma/migrations/00000000000000_init
+   npx prisma db seed           # demo catalogue, CMS pages, email templates, accounts
+   ```
+
+   Use `migrate deploy`, not `migrate dev` — Prisma Postgres does not expose the shadow database the
+   dev command needs. Create new migrations locally and commit them. The same two commands can run
+   in CI ahead of the deploy step.
+3. **Add environment variables** (Project → Settings → Environment Variables) for **Production and
+   Preview** — copy `.env.example` and set at least:
 
    ```
    DATABASE_URL, DIRECT_URL, NEXTAUTH_SECRET, NEXTAUTH_URL=https://your-domain
    NEXT_PUBLIC_SITE_URL=https://your-domain, CRON_SECRET
    ```
 
-   Add Stripe/PayPal/email keys if you use them. Keep `ALLOW_DEMO_PAYMENTS` unset in
-   production (it is ignored there anyway).
-3. **Migrate the production database** once, from your machine, against the production URL:
+   Add the Stripe/PayPal/email keys if you use them and leave `ALLOW_DEMO_PAYMENTS` unset ("Pay in
+   test mode" is hard-blocked in production builds). `NEXT_PUBLIC_*` values are inlined at build
+   time, so redeploy after changing them.
 
    ```bash
-   $env:DATABASE_URL="postgres://…"; $env:DIRECT_URL="postgres://…"
-   npm run db:deploy
-   # optional demo catalogue:
-   npm run db:seed
+   vercel link --project <your-project>
+   vercel env pull .env.vercel --environment=production --yes   # sanity-check what Vercel holds
    ```
-
-   Or add `prisma migrate deploy` to your CI pipeline before the deploy step.
 4. **Point the providers at the live domain**
 
    | Provider | Setting                                                                 |
@@ -401,14 +424,23 @@ scripts/generate-icons.mjs      sharp-based brand asset generator
    | Google   | Authorised redirect URI `https://your-domain/api/auth/callback/google`. |
    | Email    | Verify the sending domain at Resend/SendGrid and update `EMAIL_FROM`.   |
 
-5. **Deploy**, then verify `/manifest.webmanifest`, `/sw.js`, `/sitemap.xml` and
-   `/robots.txt` resolve on the live domain. The service worker is regenerated on every build.
+5. **Deploy** by pushing to `main` and watch the build log for `prisma generate`, the route table and
+   the regenerated `public/sw.js`. (`vercel deploy --prod` still works but is optional once Git is
+   connected — CLI deploys bypass the Git history.) Then check `/manifest.webmanifest`, `/sw.js`,
+   `/sitemap.xml`, `/robots.txt` and
+   `curl -H "Authorization: Bearer $CRON_SECRET" https://your-domain/api/cron/expire-orders`
+   on the live domain.
 6. **Harden**: sign in as the admin and change the seeded password, set `CRON_SECRET`, confirm
    the cron appears under Project → Cron Jobs, and add the domain in Vercel → Domains.
 
 Notes
 
 - The app runs on the Node.js runtime (Prisma needs it); no Edge-only data access is used.
+- `regions: ["cdg1"]` in `vercel.json` keeps functions next to the Paris database — adjust it if
+  your Prisma Postgres region differs.
+- Preview deployments sit behind **Vercel Authentication**, so Stripe/PayPal webhooks can only reach
+  production. They still prerender the same pages, hence Preview needs the same database variables.
+- Hobby allows one cron run per day (`0 3 * * *`, already configured); Pro can use `*/30 * * * *`.
 - `images.remotePatterns` in `next.config.ts` whitelists Unsplash, Cloudinary and Google
   avatars — add your own CDN host before pasting those URLs into the CMS.
 - Vercel builds run `postinstall` (`prisma generate`), so the client is always available.
@@ -441,6 +473,9 @@ A five-minute pass that exercises the money paths (all verified against a seeded
 | Symptom | Fix |
 | ------- | --- |
 | `Environment variable not found: DATABASE_URL` | Create `.env` from `.env.example` (Prisma reads it from the repo root); on Vercel set the variable and redeploy. |
+| `Environment variable not found: DIRECT_URL` (`P1012`) | The Prisma CLI needs it for `validate` / `migrate deploy` / `studio` (`prisma generate` alone does not). Add it to `.env` and to Vercel. |
+| Production build fails with *The table `public.Page` does not exist* (or on `/faq`) | The database was empty: `/`, `/faq` and the CMS pages are prerendered at build time. Run `prisma migrate deploy` + `db:seed` against that environment's `DATABASE_URL`, then redeploy. |
+| Deployment rejected with *Hobby plans can only run cron jobs once per day* | `vercel.json` must use a daily schedule (`0 3 * * *`) on Hobby, or upgrade the project to Pro. |
 | `prisma migrate deploy` fails with *relation already exists* (`P3005`) | The database was created with `db push`. Baseline it once: `npx prisma migrate resolve --applied 00000000000000_init`, then re-run `db:deploy`. |
 | `[next-auth][error][NO_SECRET]` or sessions silently drop | `NEXTAUTH_SECRET` is missing or shorter than 32 bytes. |
 | Login succeeds then bounces to `/login` | `NEXTAUTH_URL` must match the exact origin (including `https://` in production, no trailing slash). Clear cookies afterwards. |
