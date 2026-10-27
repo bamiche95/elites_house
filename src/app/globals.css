@@ -1,0 +1,222 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Cormorant Garamond", "Playfair Display", Georgia, "Times New Roman", serif;
+
+  --color-ivory: #fbf7f1;
+  --color-cream: #f5eee3;
+  --color-sand: #e9dcc9;
+  --color-line: #e2d5c3;
+  --color-ink: #17110e;
+  --color-espresso: #2a1f18;
+  --color-mocha: #6f5544;
+  --color-gold: #b58a4f;
+  --color-gold-soft: #d9bb8c;
+  --color-blush: #f4e7df;
+  --color-success: #2f6b4f;
+  --color-danger: #a13a35;
+
+  --shadow-luxe: 0 30px 60px -30px rgba(23, 17, 14, 0.35);
+  --shadow-card: 0 18px 40px -28px rgba(23, 17, 14, 0.4);
+
+  --animate-fade-up: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.5s ease-out both;
+  --animate-marquee: marquee 32s linear infinite;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-ivory);
+    color: var(--color-espresso);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  ::selection {
+    background: var(--color-sand);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  .container-luxe {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 80rem;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .container-luxe {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-luxe {
+      padding-inline: 2rem;
+    }
+  }
+
+  .eyebrow {
+    font-size: 0.68rem;
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--color-gold);
+  }
+
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .luxe-rule {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--color-line),
+      transparent
+    );
+  }
+
+  .prose-luxe {
+    color: var(--color-mocha);
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+
+  .prose-luxe > * + * {
+    margin-top: 1.15rem;
+  }
+
+  .prose-luxe h2 {
+    color: var(--color-espresso);
+    font-size: 1.6rem;
+    margin-top: 2.25rem;
+  }
+
+  .prose-luxe h3 {
+    color: var(--color-espresso);
+    font-size: 1.25rem;
+    margin-top: 1.75rem;
+  }
+
+  .prose-luxe ul,
+  .prose-luxe ol {
+    padding-left: 1.25rem;
+    list-style: disc;
+  }
+
+  .prose-luxe ol {
+    list-style: decimal;
+  }
+
+  .prose-luxe li + li {
+    margin-top: 0.4rem;
+  }
+
+  .prose-luxe strong {
+    color: var(--color-espresso);
+    font-weight: 600;
+  }
+
+  .prose-luxe a {
+    color: var(--color-espresso);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--color-gold-soft);
+  }
+
+  .prose-luxe blockquote {
+    border-left: 2px solid var(--color-gold-soft);
+    padding-left: 1rem;
+    font-style: italic;
+  }
+
+  .prose-luxe table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.925rem;
+  }
+
+  .prose-luxe th,
+  .prose-luxe td {
+    border-bottom: 1px solid var(--color-line);
+    padding: 0.65rem 0.5rem;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
