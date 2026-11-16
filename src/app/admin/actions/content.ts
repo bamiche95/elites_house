@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/auth-helpers";
 import { formBool, formInt, formOptional, formString } from "@/lib/form";
+import { deleteImage } from "@/lib/media/storage";
 import { prisma } from "@/lib/prisma";
 import { bannerSchema, faqSchema, pageSchema, testimonialSchema } from "@/lib/validators";
 
@@ -32,6 +33,11 @@ export async function savePageAction(formData: FormData) {
     backTo("pages", { error: parsed.error.issues[0]?.message ?? "Check the page details." });
   }
 
+  const previous = await prisma.page.findUnique({
+    where: { id: parsed.data.id },
+    select: { heroImage: true },
+  });
+
   await prisma.page.update({
     where: { id: parsed.data.id },
     data: {
@@ -44,6 +50,10 @@ export async function savePageAction(formData: FormData) {
       metaDescription: parsed.data.metaDescription ?? null,
     },
   });
+
+  if (previous?.heroImage && previous.heroImage !== parsed.data.heroImage) {
+    await deleteImage(previous.heroImage);
+  }
 
   revalidatePath("/", "layout");
   backTo("pages");
@@ -84,7 +94,14 @@ export async function saveBannerAction(formData: FormData) {
   };
 
   if (parsed.data.id) {
+    const previous = await prisma.banner.findUnique({
+      where: { id: parsed.data.id },
+      select: { imageUrl: true },
+    });
     await prisma.banner.update({ where: { id: parsed.data.id }, data });
+    if (previous?.imageUrl && previous.imageUrl !== data.imageUrl) {
+      await deleteImage(previous.imageUrl);
+    }
   } else {
     await prisma.banner.create({ data });
   }
@@ -96,7 +113,12 @@ export async function saveBannerAction(formData: FormData) {
 export async function deleteBannerAction(formData: FormData) {
   await requireAdmin();
   const id = formString(formData, "id");
-  if (id) await prisma.banner.delete({ where: { id } }).catch(() => undefined);
+  if (id) {
+    const banner = await prisma.banner
+      .delete({ where: { id }, select: { imageUrl: true } })
+      .catch(() => null);
+    await deleteImage(banner?.imageUrl);
+  }
   revalidatePath("/", "layout");
   backTo("banners");
 }
@@ -154,6 +176,7 @@ export async function saveTestimonialAction(formData: FormData) {
     quote: formString(formData, "quote"),
     rating: formInt(formData, "rating", 5),
     product: formOptional(formData, "product"),
+    imageUrl: formOptional(formData, "imageUrl"),
     position: formInt(formData, "position", 0),
     isActive: formBool(formData, "isActive"),
   });
@@ -170,12 +193,20 @@ export async function saveTestimonialAction(formData: FormData) {
     quote: parsed.data.quote,
     rating: parsed.data.rating,
     product: parsed.data.product ?? null,
+    imageUrl: parsed.data.imageUrl ?? null,
     position: parsed.data.position,
     isActive: parsed.data.isActive,
   };
 
   if (parsed.data.id) {
+    const previous = await prisma.testimonial.findUnique({
+      where: { id: parsed.data.id },
+      select: { imageUrl: true },
+    });
     await prisma.testimonial.update({ where: { id: parsed.data.id }, data });
+    if (previous?.imageUrl && previous.imageUrl !== data.imageUrl) {
+      await deleteImage(previous.imageUrl);
+    }
   } else {
     await prisma.testimonial.create({ data });
   }
@@ -187,7 +218,12 @@ export async function saveTestimonialAction(formData: FormData) {
 export async function deleteTestimonialAction(formData: FormData) {
   await requireAdmin();
   const id = formString(formData, "id");
-  if (id) await prisma.testimonial.delete({ where: { id } }).catch(() => undefined);
+  if (id) {
+    const testimonial = await prisma.testimonial
+      .delete({ where: { id }, select: { imageUrl: true } })
+      .catch(() => null);
+    await deleteImage(testimonial?.imageUrl);
+  }
   revalidatePath("/");
   backTo("testimonials");
 }

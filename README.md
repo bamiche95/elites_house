@@ -22,13 +22,14 @@ Stripe + PayPal · SMTP (nodemailer) / Resend / SendGrid · Zustand · Zod · @d
 5. [Payments](#payments)
 6. [Webhooks](#webhooks)
 7. [Email](#email)
-8. [Stock expiry cron](#stock-expiry-cron)
-9. [Admin guide](#admin-guide)
-10. [Project structure](#project-structure)
-11. [NPM scripts](#npm-scripts)
-12. [Deploying to Vercel](#deploying-to-vercel)
-13. [Smoke-test checklist](#smoke-test-checklist)
-14. [Troubleshooting](#troubleshooting)
+8. [Media & uploads](#media--uploads)
+9. [Stock expiry cron](#stock-expiry-cron)
+10. [Admin guide](#admin-guide)
+11. [Project structure](#project-structure)
+12. [NPM scripts](#npm-scripts)
+13. [Deploying to Vercel](#deploying-to-vercel)
+14. [Smoke-test checklist](#smoke-test-checklist)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -62,8 +63,8 @@ Stripe + PayPal · SMTP (nodemailer) / Resend / SendGrid · Zustand · Zod · @d
 - Dashboard KPIs, recent orders, low-stock alerts, "release expired stock" action.
 - Orders: filter/search, status transitions (processing → dispatched → completed, cancel,
   refund) that send customer emails, tracking number capture.
-- Products: create/edit, variants with per-length stock & pricing, images, categories,
-  featured/best-seller flags, soft delete.
+- Products: create/edit, variants with per-length stock & pricing, multi-image gallery uploads,
+  categories, featured/best-seller flags, soft delete.
 - Customers: list + detail (orders, spend, marketing opt-in).
 - Content: tabbed CMS for pages (markdown), banners, FAQs, testimonials, review moderation
   and the contact inbox.
@@ -179,6 +180,19 @@ to verify the login and deliver a test message before trusting a new mailbox.
 
 When no provider is configured every send is logged to `EmailLog` with status `SKIPPED`, so the
 flows stay testable without pretending an email went out.
+
+### Media uploads
+
+| Variable                | Notes                                                                 |
+| ----------------------- | --------------------------------------------------------------------- |
+| `BLOB_READ_WRITE_TOKEN` | Injected by a Vercel Blob store connected to the project. Enables production uploads. |
+| `MEDIA_PROVIDER`        | `vercel-blob` or `local`. Defaults to Blob when a token exists, local disk otherwise. |
+| `MEDIA_MAX_BYTES`       | Per-file ceiling in bytes (default `4194304` = 4 MB).                 |
+
+Without a token the admin writes to `public/uploads/<folder>/` — perfect locally, but a Vercel
+function's filesystem is read-only, so production uploads return `503` until a Blob store is
+connected. Run `npm run media:check` to see the resolved adapter, the validation rules and a live
+round-trip.
 
 ### Site & operations
 
@@ -326,6 +340,51 @@ deliveries are absorbed by the unique `PaymentTransaction.providerRef` and by an
 
 ---
 
+## Media & uploads
+
+Product galleries, banner artwork, CMS page heroes and testimonial photos are uploaded from the
+admin and stored in **Vercel Blob** (production) or on disk (development).
+
+- Storage adapter: `src/lib/media/storage.ts`. `BLOB_READ_WRITE_TOKEN` present → `@vercel/blob`
+  `put()` under a `<folder>/<uuid>.<ext>` key; otherwise `public/uploads/<folder>/` (dev only —
+  production refuses the disk fallback with a `503`). `MEDIA_PROVIDER` forces either adapter.
+- Upload endpoint: `POST /api/admin/uploads` (`runtime = "nodejs"`), one file per request with
+  `folder` = `products | banners | pages | testimonials`. Auth is re-checked server-side
+  (`401` signed out, `403` non-admin) and limited to 40 uploads/minute per admin.
+  `DELETE /api/admin/uploads?url=…` removes an asset that never reached the database.
+- Validation (`src/lib/media/validate.ts`) happens on the bytes, not the file name: magic-number
+  sniffing for **JPEG, PNG, WebP and AVIF** only, 4 MB per file (below Vercel's ~4.5 MB body cap).
+  Renamed executables and SVGs are rejected (`422`) — SVG is a stored-XSS vector.
+- Product galleries (`ProductImages` rows, `position` = gallery order) are edited in
+  **Admin → Products → {product} → Gallery** with `src/components/admin/product-images-manager.tsx`:
+  upload/drop several files (they upload sequentially, one request each), reorder, star an image as
+  primary, edit alt text and delete. Every change persists immediately through
+  `saveProductImagesAction` → `applyProductImages()` (one transaction of create/update/delete, then
+  the dropped files are removed from the store and `/product/[slug]`, `/shop` and `/` revalidate).
+  Index 0 is the primary image used by cards, the cart and order emails.
+- Single-image fields use `src/components/admin/image-uploader.tsx`, which keeps the URL in a hidden
+  input so the existing banner/page/testimonial server actions stay unchanged. Replacing or
+  deleting a record removes the previous file from the store (pasted `/images/…` and external URLs
+  are left alone).
+- New products can carry a full gallery before they exist: the create form submits a hidden
+  `imageUrls` JSON field read by `createProductAction` (`parseImageList` drops unsafe URLs,
+  duplicates and anything past 10 images).
+- `next/image` needs the Blob host in `images.remotePatterns` (`*.public.blob.vercel-storage.com`,
+  already configured). Uploaded keys never collide — filenames are UUIDs.
+- `npm run media:check` validates the sniffing rules, the gallery diffing helpers and runs a
+  real write/read/delete round-trip against whichever adapter is active.
+
+### Turning uploads on in production
+
+1. Vercel dashboard → **Storage → Create → Blob**, then **Connect** it to the `elites-house`
+   project for all environments.
+2. Redeploy (or re-run the deployment that failed) so `BLOB_READ_WRITE_TOKEN` is present.
+3. Locally, run `vercel env pull .env.local` (or paste the token into `.env`) and
+   `npm run media:check`.
+4. `public/uploads/` is git-ignored, so local test uploads never leak into commits.
+
+---
+
 ## Stock expiry cron
 
 `vercel.json` schedules `/api/cron/expire-orders` once a day at 03:00 UTC — the cadence Vercel's
@@ -384,6 +443,7 @@ src/
     ├── orders.ts               createOrder / updateOrderStatus / cancelOrder / expireStaleOrders
     ├── payments/               stripe.ts, paypal.ts, fulfilment.ts (idempotent markOrderPaid)
     ├── email/                  send.ts (Resend/SendGrid), templates.ts
+    ├── media/                  storage.ts (Vercel Blob + disk), validate.ts, product-images*.ts
     ├── cart-store.ts           Zustand cart (variantId + qty only, persisted)
     ├── cart-server.ts          server-side re-pricing & stock validation
     ├── validators.ts           Zod schemas shared by routes, actions and forms
@@ -412,6 +472,8 @@ scripts/generate-icons.mjs      sharp-based brand asset generator
 | `npm run db:studio` | Open Prisma Studio.                                            |
 | `npm run db:diff`   | Print the SQL diff between the schema and an empty database.    |
 | `npm run icons`     | Regenerate PWA icons and editorial imagery in `/public`.       |
+| `npm run email:check` | Verify the SMTP mailbox and send one test message.           |
+| `npm run media:check` | Validate upload rules + round-trip the active storage adapter.|
 | `npm run setup`     | `db:deploy` + `db:seed` + `icons` — first-run convenience.      |
 
 ---
@@ -487,8 +549,10 @@ Notes
 - Preview deployments sit behind **Vercel Authentication**, so Stripe/PayPal webhooks can only reach
   production. They still prerender the same pages, hence Preview needs the same database variables.
 - Hobby allows one cron run per day (`0 3 * * *`, already configured); Pro can use `*/30 * * * *`.
-- `images.remotePatterns` in `next.config.ts` whitelists Unsplash, Cloudinary and Google
-  avatars — add your own CDN host before pasting those URLs into the CMS.
+- `images.remotePatterns` in `next.config.ts` whitelists Unsplash, Cloudinary, Google avatars and
+  the Vercel Blob host — add your own CDN host before pasting those URLs into the CMS.
+- Connect a **Vercel Blob** store (Storage → Blob → Connect) so admin uploads have somewhere durable
+  to live; see [Media & uploads](#media--uploads).
 - Vercel builds run `postinstall` (`prisma generate`), so the client is always available.
 
 ---
@@ -509,7 +573,11 @@ A five-minute pass that exercises the money paths (all verified against a seeded
 6. Admin: change the order to *Dispatched* with a tracking number → customer email + `OrderEvent`;
    "Release expired stock" cancels stale unpaid orders.
 7. Admin → Emails: save a template, run a campaign (logged as `SKIPPED` when no provider key).
-8. Lighthouse/PWA: install prompt appears, offline page loads, `/sitemap.xml` lists products and
+8. Admin → Products → a product → **Gallery**: drop three images, star the second as primary, edit an
+   alt text, then confirm the PDP keeps the order, `/shop` shows the primary shot and the cart line
+   uses it too; delete one image and check the file disappears from the store. Upload a banner image
+   in Admin → Content → Banners and see it on the homepage hero.
+9. Lighthouse/PWA: install prompt appears, offline page loads, `/sitemap.xml` lists products and
    CMS pages.
 
 ---
@@ -535,6 +603,12 @@ A five-minute pass that exercises the money paths (all verified against a seeded
 | Order emails sit at `SKIPPED` in `EmailLog` | No provider configured — set `EMAIL_PROVIDER` + `SMTP_*` (or an ESP key) and run `npm run email:check`. |
 | `npm run email:check` fails with `535`/`530` | Wrong mailbox password or the server blocked the IP — confirm the mailbox logs in via webmail first. |
 | `next lint` warns that the command is deprecated | Expected on Next 15 — the ESLint config still runs; Next 16 will require the ESLint CLI. |
+| Uploads fail with `503` *Image storage is not configured* | No `BLOB_READ_WRITE_TOKEN`: connect a Vercel Blob store to the project and redeploy (or set `MEDIA_PROVIDER=local` for local dev). |
+| Upload returns `413` / *Request Entity Too Large* | The file exceeds the 4 MB ceiling or Vercel's ~4.5 MB body cap. Compress the image; `MEDIA_MAX_BYTES` only lowers the limit. |
+| Upload returns `422` *Unsupported image* | The bytes are not JPEG/PNG/WebP/AVIF — SVGs and renamed files are rejected on purpose. Re-export as JPG or WebP. |
+| Blob upload fails with `403` / *store does not exist* | The token belongs to a different Blob store or a read-only token — reconnect the store and copy the fresh `BLOB_READ_WRITE_TOKEN`. |
+| Uploaded images 404 locally after a restart | Dev uploads live in `public/uploads/` (git-ignored). Re-upload, or set a Blob token so files survive restarts. |
+| `next/image` rejects a pasted upload URL | Add the host to `images.remotePatterns` in `next.config.ts` (Blob and the seeded CDNs are already whitelisted). |
 
 ---
 

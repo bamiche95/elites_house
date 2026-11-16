@@ -5,8 +5,13 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/auth-helpers";
 import { formBool, formIds, formInt, formOptional, formPence, formString } from "@/lib/form";
+import { normalizeAlt, parseImageList } from "@/lib/media/product-images";
+import { applyProductImages } from "@/lib/media/product-images.server";
+import { deleteImage } from "@/lib/media/storage";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+
+const PLACEHOLDER_IMAGE = "/images/product-p1.jpg";
 
 function toPence(value: string) {
   const number = Number(value);
@@ -87,6 +92,38 @@ export async function updateProductAction(formData: FormData) {
   redirect(`/admin/products/${productId}?saved=1`);
 }
 
+type ProductImageInput = { id?: string; url: string; alt?: string };
+
+/**
+ * Persists the whole gallery from the admin image manager.
+ *
+ * Returns a result object instead of redirecting so the client component can
+ * show failures inline without losing the in-progress edit. Order becomes
+ * `position`, and rows the admin removed are deleted from the store afterwards.
+ */
+export async function saveProductImagesAction(input: {
+  productId: string;
+  images: ProductImageInput[];
+}): Promise<{ ok: boolean; error?: string }> {
+  await requireAdmin();
+
+  const result = await applyProductImages(
+    typeof input?.productId === "string" ? input.productId : "",
+    Array.isArray(input?.images) ? input.images : [],
+  );
+  if (!result.ok) return result;
+
+  await Promise.all(result.removed.map((image) => deleteImage(image.url)));
+
+  revalidatePath("/admin/products");
+  revalidatePath(`/admin/products/${input.productId}`);
+  revalidatePath(`/product/${result.slug}`);
+  revalidatePath("/shop");
+  revalidatePath("/");
+
+  return { ok: true };
+}
+
 export async function createProductAction(formData: FormData) {
   await requireAdmin();
 
@@ -111,7 +148,18 @@ export async function createProductAction(formData: FormData) {
     slug = `${baseSlug}-${attempt}`;
   }
 
-  const imageUrl = formOptional(formData, "imageUrl");
+  const gallery = parseImageList(formString(formData, "imageUrls"));
+  const legacyImageUrl = formOptional(formData, "imageUrl");
+  const requested = gallery.length > 0 ? gallery : legacyImageUrl ? [{ url: legacyImageUrl }] : [];
+  const images =
+    requested.length > 0
+      ? requested.map((image, position) => ({
+          url: image.url,
+          alt: normalizeAlt(image.alt, name),
+          position,
+        }))
+      : [{ url: PLACEHOLDER_IMAGE, alt: name, position: 0 }];
+
   const lengthInches = formInt(formData, "lengthInches", 0) || undefined;
 
   const product = await prisma.product.create({
@@ -130,17 +178,7 @@ export async function createProductAction(formData: FormData) {
       isFeatured: formBool(formData, "isFeatured"),
       isBestSeller: false,
       tags: [],
-      images: imageUrl
-        ? { create: [{ url: imageUrl, alt: name, position: 0 }] }
-        : {
-            create: [
-              {
-                url: "/images/product-p1.jpg",
-                alt: name,
-                position: 0,
-              },
-            ],
-          },
+      images: { create: images },
       variants: {
         create: [
           {

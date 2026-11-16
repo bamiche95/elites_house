@@ -37,6 +37,9 @@ yarn-error.log*
 /prisma/*.db
 /prisma/*.db-journal
 
+# admin image uploads written to disk in development (production uses Vercel Blob)
+/public/uploads/
+
 # pwa generated service worker files
 /public/sw.js
 /public/sw.js.map

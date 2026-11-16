@@ -21,6 +21,7 @@
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
     "stripe:simulate": "node scripts/stripe-simulate-event.mjs",
     "email:check": "node scripts/email-check.mjs",
+    "media:check": "tsx scripts/media-check.ts",
     "setup": "prisma migrate deploy && prisma db seed && node scripts/generate-icons.mjs"
   },
   "prisma": {
@@ -33,6 +34,7 @@
     "@prisma/client": "6.19.3",
     "@stripe/react-stripe-js": "7.0.1",
     "@stripe/stripe-js": "10.2.0",
+    "@vercel/blob": "2.9.0",
     "bcryptjs": "3.0.3",
     "clsx": "2.1.1",
     "date-fns": "4.4.0",

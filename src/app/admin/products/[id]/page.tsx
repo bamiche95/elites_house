@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
-import { updateProductAction } from "@/app/admin/actions/catalog";
+import { saveProductImagesAction, updateProductAction } from "@/app/admin/actions/catalog";
+import { ProductImagesManager } from "@/components/admin/product-images-manager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Label, Select, Textarea } from "@/components/ui/form";
@@ -83,6 +83,23 @@ export default async function AdminEditProductPage({
           {error}
         </p>
       ) : null}
+
+      <section className="border border-line bg-cream p-6">
+        <div className="mb-4">
+          <h2 className="font-display text-xl text-espresso">Gallery</h2>
+          <p className="mt-1 text-xs text-mocha">
+            Uploads save immediately. The first image is the primary shot on cards, the cart and
+            order emails.
+          </p>
+        </div>
+        <ProductImagesManager
+          mode="edit"
+          productId={product.id}
+          productName={product.name}
+          initialImages={product.images.map(({ id, url, alt }) => ({ id, url, alt }))}
+          saveAction={saveProductImagesAction}
+        />
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
         <form action={updateProductAction} className="space-y-6 border border-line bg-cream p-6">
@@ -242,29 +259,6 @@ export default async function AdminEditProductPage({
         </form>
 
         <aside className="space-y-4">
-          <div className="border border-line p-3">
-            <p className="text-[0.62rem] uppercase tracking-[0.16em] text-mocha">Imagery</p>
-            <div className="mt-3 space-y-2">
-              {product.images.map((image) => (
-                <div key={image.id} className="relative aspect-[4/5] overflow-hidden bg-cream">
-                  <Image
-                    src={image.url}
-                    alt={image.alt}
-                    fill
-                    sizes="240px"
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-              {product.images.length === 0 ? (
-                <p className="text-xs text-mocha">No imagery yet.</p>
-              ) : null}
-            </div>
-            <p className="mt-3 text-[0.65rem] leading-relaxed text-mocha">
-              Imagery is managed in the database. Add URLs via Prisma Studio for now.
-            </p>
-          </div>
-
           <div className="border border-line p-3 text-xs text-mocha">
             <p className="uppercase tracking-[0.16em]">Categories</p>
             <p className="mt-2">{categories.map((category) => category.name).join(" · ")}</p>

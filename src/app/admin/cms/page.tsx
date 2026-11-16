@@ -15,6 +15,7 @@ import {
   saveTestimonialAction,
 } from "@/app/admin/actions/content";
 import { Badge } from "@/components/ui/badge";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/form";
 import { prisma } from "@/lib/prisma";
@@ -144,9 +145,12 @@ async function PagesTab({ pages }: { pages: Awaited<ReturnType<typeof prisma.pag
               <Field label="Title" htmlFor={`title-${page.id}`}>
                 <Input id={`title-${page.id}`} name="title" defaultValue={page.title} required />
               </Field>
-              <Field label="Hero image URL" htmlFor={`hero-${page.id}`}>
-                <Input id={`hero-${page.id}`} name="heroImage" defaultValue={page.heroImage ?? ""} />
-              </Field>
+              <ImageUploader
+                name="heroImage"
+                folder="pages"
+                label="Hero image"
+                defaultValue={page.heroImage ?? ""}
+              />
             </div>
             <Field label="Excerpt" htmlFor={`excerpt-${page.id}`}>
               <Input id={`excerpt-${page.id}`} name="excerpt" defaultValue={page.excerpt ?? ""} />
@@ -227,14 +231,14 @@ async function BannersTab({
             defaultValue={banner?.badge ?? ""}
           />
         </Field>
-        <Field label="Image URL" htmlFor={`banner-image-${banner?.id ?? "new"}`}>
-          <Input
-            id={`banner-image-${banner?.id ?? "new"}`}
-            name="imageUrl"
-            defaultValue={banner?.imageUrl ?? ""}
-          />
-        </Field>
       </div>
+      <ImageUploader
+        name="imageUrl"
+        folder="banners"
+        label="Banner image"
+        defaultValue={banner?.imageUrl ?? ""}
+        hint="Wide 16:9 crops look best. Leave empty for a text-only banner."
+      />
       <Field label="Body copy" htmlFor={`banner-body-${banner?.id ?? "new"}`}>
         <Textarea
           id={`banner-body-${banner?.id ?? "new"}`}
@@ -461,6 +465,13 @@ async function TestimonialsTab({
           <Field label="Quote" htmlFor="testimonial-quote-new">
             <Textarea id="testimonial-quote-new" name="quote" required className="min-h-24" />
           </Field>
+          <ImageUploader
+            name="imageUrl"
+            folder="testimonials"
+            label="Photo (optional)"
+            aspect="square"
+            hint="Square or portrait crops work best."
+          />
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Rating" htmlFor="testimonial-rating-new">
               <Input
@@ -529,6 +540,14 @@ async function TestimonialsTab({
                 className="min-h-24"
               />
             </Field>
+            <ImageUploader
+              name="imageUrl"
+              folder="testimonials"
+              label="Photo (optional)"
+              aspect="square"
+              defaultValue={testimonial.imageUrl ?? ""}
+              hint="Square or portrait crops work best."
+            />
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label="Rating" htmlFor={`testimonial-rating-${testimonial.id}`}>
                 <Input

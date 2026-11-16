@@ -213,6 +213,7 @@ export const testimonialSchema = z.object({
   quote: z.string().min(10).max(600),
   rating: z.coerce.number().int().min(1).max(5).default(5),
   product: z.string().max(120).optional(),
+  imageUrl: z.string().max(500).optional(),
   position: z.coerce.number().int().min(0).max(99).default(0),
   isActive: z.coerce.boolean().default(true),
 });

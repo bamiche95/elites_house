@@ -36,6 +36,12 @@ export const env = {
   smtpPassword: process.env.SMTP_PASSWORD ?? "",
   smtpSecure: (process.env.SMTP_SECURE ?? "true") !== "false",
 
+  // Media uploads. `BLOB_READ_WRITE_TOKEN` is injected by the Vercel Blob store;
+  // without it the admin falls back to writing into `public/uploads` (dev only).
+  blobReadWriteToken: process.env.BLOB_READ_WRITE_TOKEN ?? "",
+  mediaProvider: (process.env.MEDIA_PROVIDER ?? "").toLowerCase(),
+  mediaMaxBytes: Number(process.env.MEDIA_MAX_BYTES ?? 4_194_304),
+
   emailFrom: process.env.EMAIL_FROM ?? "The Elites House <orders@theeliteshouse.com>",
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "contact@theeliteshouse.com",
   ordersEmail: process.env.NEXT_PUBLIC_ORDERS_EMAIL ?? "orders@theeliteshouse.com",

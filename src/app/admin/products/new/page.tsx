@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { createProductAction } from "@/app/admin/actions/catalog";
+import { ProductImagesManager } from "@/components/admin/product-images-manager";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Label, Select, Textarea } from "@/components/ui/form";
 import { TEXTURES } from "@/lib/constants";
@@ -36,7 +37,7 @@ export default async function NewProductPage({
       <div>
         <h1 className="font-display text-3xl text-espresso">New product</h1>
         <p className="mt-1 text-sm text-mocha">
-          Create the product, then add variants and imagery from its edit page.
+          Upload the gallery now — variants, stock and pricing can be tuned from the edit page.
         </p>
       </div>
 
@@ -128,13 +129,7 @@ export default async function NewProductPage({
           </Field>
         </div>
 
-        <Field
-          label="Image URL (optional)"
-          htmlFor="imageUrl"
-          hint="Use /images/… for local art, or a full https URL."
-        >
-          <Input id="imageUrl" name="imageUrl" maxLength={500} />
-        </Field>
+        <ProductImagesManager mode="create" productName="" />
 
         <div className="space-y-2">
           <Label>Visibility</Label>
