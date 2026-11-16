@@ -11,7 +11,7 @@ export function getStripe(): Stripe | null {
   if (!isStripeConfigured) return null;
   if (!stripeClient) {
     stripeClient = new Stripe(env.stripeSecretKey, {
-      appInfo: { name: "LushTresses", version: "1.0.0" },
+      appInfo: { name: "The Elites House", version: "1.0.0" },
       typescript: true,
     });
   }

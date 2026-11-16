@@ -1,4 +1,4 @@
-# LushTresses
+# The Elites House
 
 A production-ready luxury hair e-commerce storefront — 100% Remy human hair bundles, HD lace
 wigs, closures, frontals and accessories — built as a single Next.js 15 App Router application
@@ -113,7 +113,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 | Role     | Email                   | Password         |
 | -------- | ----------------------- | ---------------- |
-| Admin    | `admin@lushtresses.com` | `LushAdmin2026!` |
+| Admin    | `admin@theeliteshouse.com` | `LushAdmin2026!` |
 | Customer | `customer@example.com`  | `LushCustomer2026!` |
 
 Override these with `SEED_ADMIN_*` / `SEED_CUSTOMER_*` **before** seeding. Change the admin
@@ -134,7 +134,7 @@ Vercel → Settings → Environment Variables in production.
 | `DATABASE_URL`    | PostgreSQL connection string (Prisma Postgres, Neon, Supabase, RDS…).    |
 | `DIRECT_URL`      | Non-pooled URL (`db.prisma.io`) used by `prisma migrate` / `db push` / `studio`. Set it in Vercel too so CI migrations reuse the same values. |
 | `NEXTAUTH_SECRET` | 32-byte random string used to sign JWTs and email/verify tokens.         |
-| `NEXTAUTH_URL`    | Public origin, e.g. `https://lushtresses.com` (no trailing slash).       |
+| `NEXTAUTH_URL`    | Public origin, e.g. `https://theeliteshouse.com` (no trailing slash).       |
 
 ### Auth
 
@@ -163,7 +163,7 @@ Vercel → Settings → Environment Variables in production.
 | `EMAIL_PROVIDER`           | `resend` (default) or `sendgrid`.                           |
 | `RESEND_API_KEY`           | Required when `EMAIL_PROVIDER=resend`.                      |
 | `SENDGRID_API_KEY`         | Required when `EMAIL_PROVIDER=sendgrid`.                    |
-| `EMAIL_FROM`               | Verified sender, e.g. `LushTresses <hello@lushtresses.com>`.|
+| `EMAIL_FROM`               | Verified sender, e.g. `The Elites House <hello@theeliteshouse.com>`.|
 | `ADMIN_NOTIFICATION_EMAIL` | Receives new-order and contact-form notifications.          |
 
 When no provider is configured every send is logged to `EmailLog` with status `SKIPPED`, so the
@@ -243,12 +243,36 @@ expired stock" button on the admin dashboard.
 
 ### Local card testing
 
+Payments use the Stripe **test** keys (`sk_test_…` / `pk_test_…`). Use card
+`4242 4242 4242 4242`, any future expiry and any CVC (declines: `4000 0000 0000 0002`).
+Test-mode payment methods enabled in the Stripe Dashboard (Klarna, PayPal, Revolut Pay,
+Amazon Pay) also appear in the Payment Element and redirect back to
+`/checkout/success?order=…`, where `StripeConfirm` verifies the PaymentIntent.
+
+Fulfilment happens in two independent places, so a card payment is marked paid even
+without a webhook listener: `POST /api/checkout/stripe-confirm` (called by the success
+page) and `/api/webhooks/stripe`. Both funnel into `markOrderPaid()`, so a duplicate
+delivery is absorbed.
+
+To exercise the **signed webhook** you need `STRIPE_WEBHOOK_SECRET` set. Locally any
+`whsec_…` string works — the signature is only ever checked against that value:
+
 ```bash
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
-# copy the printed whsec_… into STRIPE_WEBHOOK_SECRET, then restart `npm run dev`
+# Option A – real Stripe events (needs the Stripe CLI: https://stripe.com/docs/stripe-cli)
+npm run stripe:listen            # prints whsec_… — paste it into .env, restart `npm run dev`
+
+# Option B – no CLI: simulate the card charge *and* the webhook
+# 1. STRIPE_WEBHOOK_SECRET="whsec_local_dev" in .env, then restart `npm run dev`
+# 2. add to bag → continue to payment → copy the order reference
+npm run stripe:simulate -- LT-2611-ABCDE succeeded   # pays with pm_card_visa
+npm run stripe:simulate -- LT-2611-ABCDE failed      # pm_card_chargeDeclined → PAYMENT_FAILED
 ```
 
-Use card `4242 4242 4242 4242`, any future expiry and any CVC.
+The simulator confirms the existing PaymentIntent with a Stripe test payment method,
+signs the resulting `payment_intent.*` event with your webhook secret and posts it to
+`/api/webhooks/stripe` — the same code path production uses. Leave
+`STRIPE_WEBHOOK_SECRET` empty if you don't need it: the endpoint then answers `503`
+instead of accepting unsigned events.
 
 ---
 
@@ -492,8 +516,8 @@ A five-minute pass that exercises the money paths (all verified against a seeded
 
 ## License
 
-Private, proprietary project built for LushTresses. Third-party dependencies keep their own
+Private, proprietary project built for The Elites House. Third-party dependencies keep their own
 licences (Next.js, Prisma, NextAuth, Stripe, PayPal, Resend, lucide-react, Tailwind CSS).
 
-Support: `hello@lushtresses.com`
+Support: `hello@theeliteshouse.com`
 

@@ -339,7 +339,7 @@ export function campaignEmail({
       title: subject,
       preheader: subject,
       content: `<div style="font-size:15px;line-height:1.7;color:#2a1f18;">${bodyHtml}</div>`,
-      footerNote: "You're receiving this because you opted in to LushTresses emails.",
+      footerNote: "You're receiving this because you opted in to The Elites House emails.",
       unsubscribeUrl,
     }),
   };

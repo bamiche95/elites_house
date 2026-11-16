@@ -198,7 +198,7 @@ export default async function ProductPage({ params }: { params: Params }) {
                 content: (
                   <p>
                     Unworn hair in its original packaging can be returned within 30 days. Email
-                    hello@lushtresses.com with your order number and we&apos;ll arrange it. Refunds
+                    hello@theeliteshouse.com with your order number and we&apos;ll arrange it. Refunds
                     are processed within 3–5 working days.
                   </p>
                 ),

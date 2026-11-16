@@ -1,5 +1,4 @@
 import { RatingStars } from "@/components/ui/price";
-import { siteConfig } from "@/lib/constants";
 
 export type TestimonialData = {
   id: string;
@@ -28,8 +27,8 @@ export function Testimonials({
           <p className="eyebrow">{eyebrow}</p>
           <h2 className="mt-3 font-display text-3xl text-espresso sm:text-4xl">{title}</h2>
           <p className="mt-3 text-sm text-mocha">
-            Real notes from clients who wear LushTresses every day. Tag{" "}
-            <span className="text-espresso">@{siteConfig.name.toLowerCase()}</span> to be
+            Real notes from clients who wear The Elites House every day. Tag{" "}
+            <span className="text-espresso">@theeliteshouse</span> to be
             featured.
           </p>
         </div>

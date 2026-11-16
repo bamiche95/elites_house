@@ -9,7 +9,7 @@ import { hashToken } from "@/lib/tokens";
 
 export const metadata: Metadata = buildMetadata({
   title: "Finish setting up your account",
-  description: "Set a password for your LushTresses account.",
+  description: "Set a password for your The Elites House account.",
   path: "/guest-setup",
   noIndex: true,
 });

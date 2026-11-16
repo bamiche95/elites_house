@@ -9,7 +9,7 @@ import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
   title: "Secure checkout",
-  description: "Complete your LushTresses order securely with Stripe or PayPal.",
+  description: "Complete your The Elites House order securely with Stripe or PayPal.",
   path: "/checkout",
   noIndex: true,
 });

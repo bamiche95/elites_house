@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     description:
       category.description ??
       category.tagline ??
-      `Shop ${category.name.toLowerCase()} at LushTresses — 100% Remy human hair, hand-finished in London.`,
+      `Shop ${category.name.toLowerCase()} at The Elites House — 100% Remy human hair, hand-finished in London.`,
     path: `/shop/${category.slug}`,
     image: category.imageUrl ?? "/images/og-default.jpg",
   });

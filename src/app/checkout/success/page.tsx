@@ -12,7 +12,7 @@ import { formatDate, formatMoneyExact } from "@/lib/utils";
 
 export const metadata: Metadata = buildMetadata({
   title: "Order confirmed",
-  description: "Thank you for your LushTresses order.",
+  description: "Thank you for your The Elites House order.",
   path: "/checkout/success",
   noIndex: true,
 });

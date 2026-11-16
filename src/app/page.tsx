@@ -90,7 +90,7 @@ export default async function HomePage() {
             <div className="relative aspect-[4/5] w-full overflow-hidden bg-cream sm:aspect-[5/6]">
               <Image
                 src={hero?.imageUrl ?? "/images/hero.jpg"}
-                alt="LushTresses luxury human hair styled in soft waves"
+                alt="The Elites House luxury human hair styled in soft waves"
                 fill
                 priority
                 sizes="(max-width: 1024px) 92vw, 46vw"
@@ -190,7 +190,7 @@ export default async function HomePage() {
           <div className="relative aspect-[4/3] overflow-hidden bg-sand">
             <Image
               src="/images/about-atelier.jpg"
-              alt="Inside the LushTresses atelier in London"
+              alt="Inside The Elites House atelier in London"
               fill
               sizes="(max-width: 1024px) 92vw, 46vw"
               className="object-cover"

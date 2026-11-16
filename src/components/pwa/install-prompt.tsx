@@ -37,7 +37,7 @@ export function InstallPrompt() {
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-espresso">
-          Add LushTresses to your home screen
+          Add The Elites House to your home screen
         </p>
         <p className="mt-0.5 text-xs text-mocha">Shop faster with our app-like experience.</p>
       </div>

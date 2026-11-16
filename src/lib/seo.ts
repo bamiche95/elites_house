@@ -17,7 +17,7 @@ export const defaultMetadata: Metadata = {
     "closures and frontals",
     "body wave bundles UK",
     "kinky curly hair",
-    "LushTresses",
+    "The Elites House",
   ],
   authors: [{ name: siteConfig.name, url: siteConfig.url }],
   creator: siteConfig.name,

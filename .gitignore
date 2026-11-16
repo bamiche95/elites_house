@@ -44,3 +44,4 @@ yarn-error.log*
 /public/workbox-*.js.map
 /public/swe-worker-*.js
 /public/fallback-*.js
+.env*

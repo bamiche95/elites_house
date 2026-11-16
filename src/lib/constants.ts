@@ -13,14 +13,14 @@ export type BadgeTone =
   | "outline";
 
 export const siteConfig = {
-  name: process.env.NEXT_PUBLIC_BRAND_NAME || "LushTresses",
+  name: process.env.NEXT_PUBLIC_BRAND_NAME || "The Elites House",
   tagline: "Luxury human hair, crafted for every day",
   description:
-    "LushTresses is a London hair atelier offering 100% Remy human hair bundles, HD lace wigs, closures and frontals — ethically sourced, double-drawn and ready to install.",
+    "The Elites House is a London hair atelier offering 100% Remy human hair bundles, HD lace wigs, closures and frontals — ethically sourced, double-drawn and ready to install.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "hello@lushtresses.com",
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "hello@theeliteshouse.com",
   supportPhone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || "+44 20 7946 0958",
-  instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://instagram.com/lushtresses",
+  instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://instagram.com/theeliteshouse",
   addressLine: "Studio 4, 18 Portobello Road",
   city: "London",
   postcode: "W11 2DZ",

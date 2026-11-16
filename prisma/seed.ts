@@ -1,5 +1,5 @@
 /**
- * LushTresses seed data.
+ * The Elites House seed data.
  *
  * Run with `npm run db:seed` (idempotent: resets store data first).
  * Creates the catalogue, CMS content, demo accounts, coupons and sample orders.
@@ -9,7 +9,7 @@ import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? "admin@lushtresses.com";
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? "admin@theeliteshouse.com";
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? "LushAdmin2026!";
 const CUSTOMER_EMAIL = process.env.SEED_CUSTOMER_EMAIL ?? "customer@example.com";
 const CUSTOMER_PASSWORD = process.env.SEED_CUSTOMER_PASSWORD ?? "LushCustomer2026!";
@@ -459,13 +459,13 @@ const pages = [
     excerpt:
       "A London atelier built on a simple belief: luxury hair should behave like your own.",
     heroImage: "/images/about-atelier.jpg",
-    metaTitle: "About LushTresses — A London Human Hair Atelier",
+    metaTitle: "About The Elites House — A London Human Hair Atelier",
     metaDescription:
-      "Meet the London atelier behind LushTresses: ethically sourced Remy human hair, hand-finished bundles and HD lace wigs.",
+      "Meet the London atelier behind The Elites House: ethically sourced Remy human hair, hand-finished bundles and HD lace wigs.",
     position: 1,
     content: `## Hair, considered.
 
-LushTresses began in a small studio off Portobello Road with three textures, a hand-held steamer and a stubborn belief: luxury hair should behave like your own — no shedding, no matting, no surprises.
+The Elites House began in a small studio off Portobello Road with three textures, a hand-held steamer and a stubborn belief: luxury hair should behave like your own — no shedding, no matting, no surprises.
 
 We buy in small batches from a single, long-standing supplier and we turn most lots away. Every bundle is checked for cuticle alignment, weighed to the gram and steamed by hand. If it doesn't pass, it doesn't ship.
 
@@ -526,7 +526,7 @@ We accept returns within 30 days of delivery, provided the hair is unworn, unwas
 
 ## How to start a return
 
-1. Email hello@lushtresses.com with your order number and the reason for your return.
+1. Email hello@theeliteshouse.com with your order number and the reason for your return.
 2. We'll send a returns authorisation and a prepaid label where applicable.
 3. Pack the hair in its original packaging and drop it at your nearest Post Office.
 
@@ -578,11 +578,11 @@ Refunds return to the original payment method within 3–5 working days of appro
     excerpt: "What we collect, why we collect it, and the choices you have.",
     metaTitle: "Privacy Policy",
     metaDescription:
-      "How LushTresses collects, uses and protects your personal data under UK GDPR.",
+      "How The Elites House collects, uses and protects your personal data under UK GDPR.",
     position: 5,
     content: `## Who we are
 
-LushTresses is a UK-registered hair atelier and the data controller for information collected through this website.
+The Elites House is a UK-registered hair atelier and the data controller for information collected through this website.
 
 ## What we collect
 
@@ -601,7 +601,7 @@ Order records are kept for six years to meet UK accounting requirements. Marketi
 
 ## Your rights
 
-You can request access, correction, export or deletion of your data at any time by emailing hello@lushtresses.com. You also have the right to complain to the Information Commissioner's Office.
+You can request access, correction, export or deletion of your data at any time by emailing hello@theeliteshouse.com. You also have the right to complain to the Information Commissioner's Office.
 
 ## Cookies
 
@@ -610,14 +610,14 @@ We use strictly necessary cookies (session, basket and security) and optional an
   {
     slug: "terms",
     title: "Terms of service",
-    excerpt: "The agreement between you and LushTresses.",
+    excerpt: "The agreement between you and The Elites House.",
     metaTitle: "Terms of Service",
     metaDescription:
-      "The terms that govern purchases from LushTresses, including pricing, delivery, returns and liability.",
+      "The terms that govern purchases from The Elites House, including pricing, delivery, returns and liability.",
     position: 6,
     content: `## Agreement
 
-By placing an order with LushTresses you agree to these terms. If you don't agree, please don't place an order.
+By placing an order with The Elites House you agree to these terms. If you don't agree, please don't place an order.
 
 ## Products
 
@@ -682,15 +682,15 @@ If your hair starts feeling heavy or producty, use a clarifying shampoo once a m
     excerpt: "The safest way to gift hair — let them choose the texture.",
     metaTitle: "Gift Cards",
     metaDescription:
-      "Give the gift of choice with a LushTresses digital gift card, delivered instantly by email.",
+      "Give the gift of choice with a digital gift card from The Elites House, delivered instantly by email.",
     position: 8,
     content: `## The gift of choice
 
-Hair is personal. A LushTresses gift card lets them choose the texture, length and lace that suits them — delivered instantly by email.
+Hair is personal. A gift card from The Elites House lets them choose the texture, length and lace that suits them — delivered instantly by email.
 
 ## How it works
 
-1. Email hello@lushtresses.com with the amount (£50–£500) and the recipient's email address.
+1. Email hello@theeliteshouse.com with the amount (£50–£500) and the recipient's email address.
 2. We'll send a beautifully designed digital card with a unique code.
 3. The code can be used at checkout against any order, and never expires.
 
@@ -912,15 +912,15 @@ const emailTemplates = [
   {
     name: "welcome",
     description: "Sent when a shopper creates an account.",
-    subject: "Welcome to LushTresses",
+    subject: "Welcome to The Elites House",
     preheader: "Your account is ready — here's where to start.",
     bodyHtml:
-      '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">Welcome to LushTresses.</h1><p>Hi {{customer_first_name}}, we\'re so glad you\'re here. Your account is ready — save addresses, track orders and keep your wishlist in one place.</p><p><a href="{{site_url}}/shop">Explore the collection</a></p>',
+      '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">Welcome to The Elites House.</h1><p>Hi {{customer_first_name}}, we\'re so glad you\'re here. Your account is ready — save addresses, track orders and keep your wishlist in one place.</p><p><a href="{{site_url}}/shop">Explore the collection</a></p>',
   },
   {
     name: "order-confirmation",
     description: "Payment confirmed — includes the guest account setup link.",
-    subject: "Order {{order_number}} confirmed — LushTresses",
+    subject: "Order {{order_number}} confirmed — The Elites House",
     preheader: "We're preparing your order by hand.",
     bodyHtml:
       '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">Thank you, {{customer_first_name}}.</h1><p>Your order <strong>{{order_number}}</strong> is confirmed. Our atelier team is preparing everything by hand.</p>{{order_summary}}<p>{{guest_setup_block}}</p>',
@@ -944,7 +944,7 @@ const emailTemplates = [
   {
     name: "guest-setup",
     description: "One-time password setup link for guest buyers.",
-    subject: "Finish setting up your LushTresses account",
+    subject: "Finish setting up your The Elites House account",
     preheader: "One click to set your password.",
     bodyHtml:
       '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">One last step</h1><p>Hi {{customer_first_name}}, tap below to choose a password. This link expires in 48 hours.</p><p><a href="{{setup_url}}">Set my password</a></p>',
@@ -1007,7 +1007,7 @@ const settings = [
     value: {
       freeShippingThresholdPence: 15000,
       currency: "GBP",
-      supportEmail: "hello@lushtresses.com",
+      supportEmail: "hello@theeliteshouse.com",
       dispatchCutoff: "14:00",
     },
   },
@@ -1090,7 +1090,7 @@ async function main() {
         isFeatured: Boolean(product.isFeatured),
         isBestSeller: Boolean(product.isBestSeller),
         tags: product.tags,
-        metaTitle: `${product.name} — LushTresses`,
+        metaTitle: `${product.name} — The Elites House`,
         metaDescription: product.subtitle,
         images: {
           create: product.images.map((url, index) => ({
@@ -1136,7 +1136,7 @@ async function main() {
   const admin = await prisma.user.create({
     data: {
       email: ADMIN_EMAIL,
-      name: "LushTresses Atelier",
+      name: "The Elites House Atelier",
       passwordHash: adminPasswordHash,
       role: "ADMIN",
       phone: "+44 20 7946 0958",

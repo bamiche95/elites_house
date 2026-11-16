@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     await sendEmail({
       to: email.toLowerCase().trim(),
-      subject: "We've received your message — LushTresses",
+      subject: "We've received your message — The Elites House",
       template: "contact-acknowledgement",
       html: emailLayout({
         title: "We've received your message",

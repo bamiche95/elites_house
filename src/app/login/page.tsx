@@ -8,7 +8,7 @@ import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
   title: "Sign in",
-  description: "Sign in to your LushTresses account to track orders and save addresses.",
+  description: "Sign in to your The Elites House account to track orders and save addresses.",
   path: "/login",
   noIndex: true,
 });

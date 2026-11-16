@@ -79,7 +79,7 @@ function artSvg({ id, width, height, from, to, accent, label = "", compact = fal
   ${
     compact
       ? `<text x="50%" y="53%" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="${type}" fill="${accent}" letter-spacing="${Math.round(width * 0.02)}">LT</text>`
-      : `<text x="${pad}" y="${height - pad - type * 1.6}" font-family="ui-sans-serif, 'Segoe UI', Arial, sans-serif" font-size="${eyebrow}" letter-spacing="${Math.round(eyebrow * 0.42)}" fill="${accent}" opacity="0.85">LUSH TRESSES</text>
+      : `<text x="${pad}" y="${height - pad - type * 1.6}" font-family="ui-sans-serif, 'Segoe UI', Arial, sans-serif" font-size="${eyebrow}" letter-spacing="${Math.round(eyebrow * 0.42)}" fill="${accent}" opacity="0.85">THE ELITES HOUSE</text>
   <text x="${pad}" y="${height - pad - type * 0.35}" font-family="Georgia, 'Times New Roman', serif" font-size="${type}" fill="#fbf7f1">${label}</text>`
   }
 </svg>`;

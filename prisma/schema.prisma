@@ -1,4 +1,4 @@
-// LushTresses — Prisma schema
+// The Elites House — Prisma schema
 // Database: PostgreSQL 14+ (Prisma Postgres / Neon / Supabase)
 // Money is stored in integer minor units (pence) to match Stripe & PayPal APIs.
 

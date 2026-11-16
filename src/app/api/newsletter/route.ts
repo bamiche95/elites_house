@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     if (isEmailConfigured) {
       const content = campaignEmail({
         subject: "You're on the atelier list",
-        bodyHtml: `<p>Hi there,</p><p>Thank you for joining the LushTresses list. Expect one considered email a fortnight: restocks, styling notes and first access to new batches.</p><p>In the meantime, start with our <a href="${env.siteUrl}/hair-care">hair care guide</a>.</p><p>— The atelier</p>`,
+        bodyHtml: `<p>Hi there,</p><p>Thank you for joining The Elites House list. Expect one considered email a fortnight: restocks, styling notes and first access to new batches.</p><p>In the meantime, start with our <a href="${env.siteUrl}/hair-care">hair care guide</a>.</p><p>— The atelier</p>`,
         unsubscribeUrl: `${env.siteUrl.replace(/\/$/, "")}/unsubscribe/${subscriber.token}`,
       });
       await sendEmail({

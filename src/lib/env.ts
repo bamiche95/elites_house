@@ -29,7 +29,7 @@ export const env = {
   emailProvider: (process.env.EMAIL_PROVIDER ?? "resend").toLowerCase(),
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   sendgridApiKey: process.env.SENDGRID_API_KEY ?? "",
-  emailFrom: process.env.EMAIL_FROM ?? "LushTresses <hello@lushtresses.com>",
+  emailFrom: process.env.EMAIL_FROM ?? "The Elites House <hello@theeliteshouse.com>",
   adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL ?? "",
 
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
@@ -37,7 +37,7 @@ export const env = {
 
   allowDemoPaymentsFlag: bool(process.env.ALLOW_DEMO_PAYMENTS),
 
-  seedAdminEmail: process.env.SEED_ADMIN_EMAIL ?? "admin@lushtresses.com",
+  seedAdminEmail: process.env.SEED_ADMIN_EMAIL ?? "admin@theeliteshouse.com",
   seedAdminPassword: process.env.SEED_ADMIN_PASSWORD ?? "LushAdmin2026!",
   seedCustomerEmail: process.env.SEED_CUSTOMER_EMAIL ?? "customer@example.com",
   seedCustomerPassword: process.env.SEED_CUSTOMER_PASSWORD ?? "LushCustomer2026!",

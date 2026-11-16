@@ -79,7 +79,7 @@ export async function createPayPalOrder({
         },
       ],
       application_context: {
-        brand_name: "LushTresses",
+        brand_name: "The Elites House",
         shipping_preference: "NO_SHIPPING",
         user_action: "PAY_NOW",
         return_url: returnUrl,

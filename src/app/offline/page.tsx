@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "You're offline",
-  description: "The LushTresses app is offline. Reconnect to keep browsing.",
+  description: "The Elites House app is offline. Reconnect to keep browsing.",
   robots: { index: false, follow: false },
 };
 

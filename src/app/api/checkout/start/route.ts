@@ -80,7 +80,7 @@ export async function POST(request: Request) {
       const paypal = await createPayPalOrder({
         amountPence: order.totalPence,
         reference: order.orderNumber,
-        description: `LushTresses order ${order.orderNumber}`,
+        description: `The Elites House order ${order.orderNumber}`,
         returnUrl: `${siteUrl}/checkout/success?order=${order.orderNumber}`,
         cancelUrl: `${siteUrl}/checkout?cancelled=1`,
       });
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
         customerEmail: order.customerEmail,
       },
       receipt_email: order.customerEmail,
-      description: `LushTresses order ${order.orderNumber}`,
+      description: `The Elites House order ${order.orderNumber}`,
     });
 
     await prisma.orderEvent.create({

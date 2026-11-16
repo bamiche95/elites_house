@@ -73,7 +73,7 @@ export function SearchDialog({
   }, [query, open]);
 
   return (
-    <Overlay open={open} onClose={onClose} title="Search LushTresses">
+    <Overlay open={open} onClose={onClose} title="Search The Elites House">
       <div className="border-b border-line px-5 py-4">
         <div className="flex items-center gap-3 border border-line bg-white/70 px-3">
           <Search className="h-4 w-4 text-mocha" />

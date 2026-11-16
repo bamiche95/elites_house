@@ -7,7 +7,7 @@ import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
   title: "Email preferences",
-  description: "Manage your LushTresses email preferences.",
+  description: "Manage your The Elites House email preferences.",
   path: "/unsubscribe",
   noIndex: true,
 });

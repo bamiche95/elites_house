@@ -19,7 +19,7 @@ const withPWA = withPWAInit({
         urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
         handler: "CacheFirst",
         options: {
-          cacheName: "lushtresses-images",
+          cacheName: "theeliteshouse-images",
           expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 30 },
         },
       },
@@ -27,7 +27,7 @@ const withPWA = withPWAInit({
         urlPattern: /\/api\/postcode.*/i,
         handler: "NetworkFirst",
         options: {
-          cacheName: "lushtresses-postcode",
+          cacheName: "theeliteshouse-postcode",
           networkTimeoutSeconds: 5,
           expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
         },

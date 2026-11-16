@@ -11,7 +11,7 @@ import { buildMetadata } from "@/lib/seo";
 export const metadata: Metadata = buildMetadata({
   title: "Contact the atelier",
   description:
-    "Questions about sizing, textures, installs or an order? Message the LushTresses atelier — we reply within one working day.",
+    "Questions about sizing, textures, installs or an order? Message the atelier at The Elites House — we reply within one working day.",
   path: "/contact",
 });
 

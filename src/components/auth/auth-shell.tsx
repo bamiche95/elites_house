@@ -26,7 +26,7 @@ export function AuthShell({
       <div className="relative hidden aspect-[4/5] overflow-hidden bg-cream lg:block">
         <Image
           src={image}
-          alt="LushTresses atelier"
+          alt="The Elites House atelier"
           fill
           priority
           sizes="46vw"
