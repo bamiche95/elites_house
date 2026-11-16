@@ -41,6 +41,18 @@ export function SiteHeader() {
       >
         <div className="container-luxe">
           <div className="grid h-20 grid-cols-[auto_1fr_auto] items-center gap-4 lg:grid-cols-[1fr_auto_1fr]">
+              <Link
+              href="/"
+              aria-label={`${siteConfig.name} home`}
+              className="justify-self-center text-center"
+            >
+              <span className="font-display text-2xl uppercase tracking-[0.24em] text-espresso sm:text-[1.7rem]">
+                {siteConfig.name}
+              </span>
+              <span className="mt-0.5 hidden text-[0.55rem] uppercase tracking-[0.34em] text-gold sm:block">
+                Human Hair Atelier
+              </span>
+            </Link>
             <div className="flex items-center gap-6">
               <button
                 type="button"
@@ -68,18 +80,7 @@ export function SiteHeader() {
               </nav>
             </div>
 
-            <Link
-              href="/"
-              aria-label={`${siteConfig.name} home`}
-              className="justify-self-center text-center"
-            >
-              <span className="font-display text-2xl uppercase tracking-[0.24em] text-espresso sm:text-[1.7rem]">
-                {siteConfig.name}
-              </span>
-              <span className="mt-0.5 hidden text-[0.55rem] uppercase tracking-[0.34em] text-gold sm:block">
-                Human Hair Atelier
-              </span>
-            </Link>
+          
 
             <div className="flex items-center justify-end gap-4 sm:gap-5">
               <button

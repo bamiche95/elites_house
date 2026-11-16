@@ -12,7 +12,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { Accordion } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { RatingStars } from "@/components/ui/price";
-import { TEXTURE_LABELS } from "@/lib/constants";
+import { TEXTURE_LABELS, siteConfig } from "@/lib/constants";
 import { breadcrumbJsonLd, productJsonLd } from "@/lib/jsonld";
 import { prisma } from "@/lib/prisma";
 import { productCardInclude, toProductCard } from "@/lib/product-view";
@@ -197,9 +197,15 @@ export default async function ProductPage({ params }: { params: Params }) {
                 title: "Returns & exchanges",
                 content: (
                   <p>
-                    Unworn hair in its original packaging can be returned within 30 days. Email
-                    hello@theeliteshouse.com with your order number and we&apos;ll arrange it. Refunds
-                    are processed within 3–5 working days.
+                    Unworn hair in its original packaging can be returned within 30 days. Email{" "}
+                    <a
+                      href={`mailto:${siteConfig.ordersEmail}`}
+                      className="underline underline-offset-2"
+                    >
+                      {siteConfig.ordersEmail}
+                    </a>{" "}
+                    with your order number and we&apos;ll arrange it. Refunds are processed within
+                    3–5 working days.
                   </p>
                 ),
               },

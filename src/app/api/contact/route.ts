@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { sendAdminNotification, sendEmail } from "@/lib/email/send";
 import { emailLayout, escapeHtml } from "@/lib/email/templates";
+import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { contactSchema } from "@/lib/validators";
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
       to: email.toLowerCase().trim(),
       subject: "We've received your message — The Elites House",
       template: "contact-acknowledgement",
+      replyTo: env.contactEmail,
       html: emailLayout({
         title: "We've received your message",
         preheader: "A real person will reply within one working day.",
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
           <p style="margin:0;">${escapeHtml(message).replace(/\n/g, "<br />")}</p>
         `,
       }),
+      { to: env.contactEmail, replyTo: email.toLowerCase().trim() },
     );
 
     return NextResponse.json({

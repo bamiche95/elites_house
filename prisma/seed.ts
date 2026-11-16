@@ -526,7 +526,7 @@ We accept returns within 30 days of delivery, provided the hair is unworn, unwas
 
 ## How to start a return
 
-1. Email hello@theeliteshouse.com with your order number and the reason for your return.
+1. Email orders@theeliteshouse.com with your order number and the reason for your return.
 2. We'll send a returns authorisation and a prepaid label where applicable.
 3. Pack the hair in its original packaging and drop it at your nearest Post Office.
 
@@ -601,7 +601,7 @@ Order records are kept for six years to meet UK accounting requirements. Marketi
 
 ## Your rights
 
-You can request access, correction, export or deletion of your data at any time by emailing hello@theeliteshouse.com. You also have the right to complain to the Information Commissioner's Office.
+You can request access, correction, export or deletion of your data at any time by emailing contact@theeliteshouse.com. You also have the right to complain to the Information Commissioner's Office.
 
 ## Cookies
 
@@ -690,7 +690,7 @@ Hair is personal. A gift card from The Elites House lets them choose the texture
 
 ## How it works
 
-1. Email hello@theeliteshouse.com with the amount (£50–£500) and the recipient's email address.
+1. Email orders@theeliteshouse.com with the amount (£50–£500) and the recipient's email address.
 2. We'll send a beautifully designed digital card with a unique code.
 3. The code can be used at checkout against any order, and never expires.
 
@@ -1007,7 +1007,8 @@ const settings = [
     value: {
       freeShippingThresholdPence: 15000,
       currency: "GBP",
-      supportEmail: "hello@theeliteshouse.com",
+      supportEmail: "contact@theeliteshouse.com",
+      ordersEmail: "orders@theeliteshouse.com",
       dispatchCutoff: "14:00",
     },
   },

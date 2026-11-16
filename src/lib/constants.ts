@@ -18,7 +18,11 @@ export const siteConfig = {
   description:
     "The Elites House is a London hair atelier offering 100% Remy human hair bundles, HD lace wigs, closures and frontals — ethically sourced, double-drawn and ready to install.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "hello@theeliteshouse.com",
+  supportEmail:
+    process.env.NEXT_PUBLIC_CONTACT_EMAIL ||
+    process.env.NEXT_PUBLIC_SUPPORT_EMAIL ||
+    "contact@theeliteshouse.com",
+  ordersEmail: process.env.NEXT_PUBLIC_ORDERS_EMAIL || "orders@theeliteshouse.com",
   supportPhone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || "+44 20 7946 0958",
   instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://instagram.com/theeliteshouse",
   addressLine: "Studio 4, 18 Portobello Road",

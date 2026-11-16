@@ -8,7 +8,7 @@ email, CMS-managed editorial pages and an installable PWA.
 ```
 Next.js 15 (App Router) · React 19 · TypeScript 5.9 · Tailwind CSS 4
 Prisma 6 + PostgreSQL (Prisma Postgres) · NextAuth 4 (JWT + Prisma adapter)
-Stripe + PayPal · Resend / SendGrid · Zustand · Zod · @ducanh2912/next-pwa
+Stripe + PayPal · SMTP (nodemailer) / Resend / SendGrid · Zustand · Zod · @ducanh2912/next-pwa
 ```
 
 ---
@@ -160,11 +160,22 @@ Vercel → Settings → Environment Variables in production.
 
 | Variable                   | Notes                                                       |
 | -------------------------- | ----------------------------------------------------------- |
-| `EMAIL_PROVIDER`           | `resend` (default) or `sendgrid`.                           |
+| `EMAIL_PROVIDER`           | `smtp`, `resend` (default) or `sendgrid`.                   |
+| `SMTP_HOST`                | Mail server host, e.g. `premium709.web-hosting.com`.        |
+| `SMTP_PORT`                | `465` (SSL, the default) or `587` (STARTTLS).               |
+| `SMTP_SECURE`              | `true` for port 465; set `false` for 587/STARTTLS.          |
+| `SMTP_USER`                | Full mailbox address used for auth, e.g. `orders@theeliteshouse.com`.|
+| `SMTP_PASSWORD`            | Mailbox password (quote it if it contains `#`).             |
 | `RESEND_API_KEY`           | Required when `EMAIL_PROVIDER=resend`.                      |
 | `SENDGRID_API_KEY`         | Required when `EMAIL_PROVIDER=sendgrid`.                    |
-| `EMAIL_FROM`               | Verified sender, e.g. `The Elites House <hello@theeliteshouse.com>`.|
-| `ADMIN_NOTIFICATION_EMAIL` | Receives new-order and contact-form notifications.          |
+| `EMAIL_FROM`               | Envelope/visible sender, e.g. `The Elites House <orders@theeliteshouse.com>`.|
+| `ADMIN_NOTIFICATION_EMAIL` | Receives new-order alerts, e.g. `orders@theeliteshouse.com`.|
+
+With `EMAIL_PROVIDER=smtp` the app sends through your hosting mailbox over nodemailer, so no
+third-party ESP is needed. Most cPanel/Exim servers require the `From` address to belong to the
+authenticated mailbox — keep `EMAIL_FROM` and `SMTP_USER` on the same address (the default pair is
+`orders@theeliteshouse.com`), and use `Reply-To` for the support inbox. Run `npm run email:check`
+to verify the login and deliver a test message before trusting a new mailbox.
 
 When no provider is configured every send is logged to `EmailLog` with status `SKIPPED`, so the
 flows stay testable without pretending an email went out.
@@ -175,7 +186,9 @@ flows stay testable without pretending an email went out.
 | ------------------------------ | ----------------------------------------------------------- |
 | `NEXT_PUBLIC_SITE_URL`         | Canonical origin used for metadata, sitemap and links.       |
 | `NEXT_PUBLIC_BRAND_NAME`       | Brand name shown in the header, footer and emails.           |
-| `NEXT_PUBLIC_SUPPORT_EMAIL`    | Public support address.                                     |
+| `NEXT_PUBLIC_CONTACT_EMAIL`    | Public support/contact address (footer, emails, JSON-LD). Takes precedence over `NEXT_PUBLIC_SUPPORT_EMAIL`. |
+| `NEXT_PUBLIC_SUPPORT_EMAIL`    | Legacy alias for the support address — set to the same `contact@` mailbox. |
+| `NEXT_PUBLIC_ORDERS_EMAIL`     | Order-enquiry address used in returns/gift-card copy and printed on order mail. |
 | `NEXT_PUBLIC_SUPPORT_PHONE`    | Public support number.                                      |
 | `NEXT_PUBLIC_INSTAGRAM_URL`    | Footer social link.                                         |
 | `CRON_SECRET`                  | Bearer token protecting `/api/cron/expire-orders`.           |
@@ -291,9 +304,18 @@ deliveries are absorbed by the unique `PaymentTransaction.providerRef` and by an
 
 ## Email
 
-- Provider abstraction: `src/lib/email/send.ts` (**Resend** by default, **SendGrid** when
-  `EMAIL_PROVIDER=sendgrid`), `src/lib/email/templates.ts` for branded HTML. Every send is
-  persisted to `EmailLog` with its status (`SENT`, `SKIPPED`, `FAILED`).
+- Provider abstraction: `src/lib/email/send.ts` — **SMTP** via nodemailer (`EMAIL_PROVIDER=smtp`),
+  **Resend** (default) or **SendGrid** (`EMAIL_PROVIDER=sendgrid`) — plus
+  `src/lib/email/templates.ts` for branded HTML. Every send is persisted to `EmailLog` with its
+  status (`SENT`, `SKIPPED`, `FAILED`).
+- Addresses: everything is sent from `EMAIL_FROM` (`orders@theeliteshouse.com`), because the SMTP
+  mailbox authenticates as that address. New-order and contact alerts go to
+  `ADMIN_NOTIFICATION_EMAIL` (`orders@`); contact-form mail goes to `contact@` with the customer as
+  `Reply-To`, so replies land in the support inbox. Public support copy uses
+  `NEXT_PUBLIC_CONTACT_EMAIL` (`contact@`), and returns/gift-card copy uses
+  `NEXT_PUBLIC_ORDERS_EMAIL` (`orders@`).
+- `npm run email:check [inbox]` logs into the SMTP server, reports the greeting/certificate result
+  and delivers one test message — the quickest way to prove a mailbox before blaming the app.
 - Transactional emails: order confirmation, order status updates (processing, dispatched,
   completed, cancelled/refunded), guest account setup + reminder, welcome, admin new-order
   alert and the contact-form acknowledgement.
@@ -510,6 +532,8 @@ A five-minute pass that exercises the money paths (all verified against a seeded
 | `next/image` returns `400` for a pasted image URL | Add the host to `images.remotePatterns` in `next.config.ts`. |
 | Stale service worker after a deploy | Dev builds disable the SW. In production, hard-reload or unregister it (DevTools → Application → Service Workers); the SW is regenerated per build with `cleanupOutdatedCaches`. |
 | Types complain about missing Prisma fields | `npm run db:generate` after editing `prisma/schema.prisma`. |
+| Order emails sit at `SKIPPED` in `EmailLog` | No provider configured — set `EMAIL_PROVIDER` + `SMTP_*` (or an ESP key) and run `npm run email:check`. |
+| `npm run email:check` fails with `535`/`530` | Wrong mailbox password or the server blocked the IP — confirm the mailbox logs in via webmail first. |
 | `next lint` warns that the command is deprecated | Expected on Next 15 — the ESLint config still runs; Next 16 will require the ESLint CLI. |
 
 ---
@@ -519,5 +543,5 @@ A five-minute pass that exercises the money paths (all verified against a seeded
 Private, proprietary project built for The Elites House. Third-party dependencies keep their own
 licences (Next.js, Prisma, NextAuth, Stripe, PayPal, Resend, lucide-react, Tailwind CSS).
 
-Support: `hello@theeliteshouse.com`
+Support: `contact@theeliteshouse.com` · Orders: `orders@theeliteshouse.com`
 

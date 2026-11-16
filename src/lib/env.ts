@@ -29,8 +29,17 @@ export const env = {
   emailProvider: (process.env.EMAIL_PROVIDER ?? "resend").toLowerCase(),
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   sendgridApiKey: process.env.SENDGRID_API_KEY ?? "",
-  emailFrom: process.env.EMAIL_FROM ?? "The Elites House <hello@theeliteshouse.com>",
-  adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL ?? "",
+
+  smtpHost: process.env.SMTP_HOST ?? "",
+  smtpPort: Number(process.env.SMTP_PORT ?? 465),
+  smtpUser: process.env.SMTP_USER ?? "",
+  smtpPassword: process.env.SMTP_PASSWORD ?? "",
+  smtpSecure: (process.env.SMTP_SECURE ?? "true") !== "false",
+
+  emailFrom: process.env.EMAIL_FROM ?? "The Elites House <orders@theeliteshouse.com>",
+  contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "contact@theeliteshouse.com",
+  ordersEmail: process.env.NEXT_PUBLIC_ORDERS_EMAIL ?? "orders@theeliteshouse.com",
+  adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL ?? "orders@theeliteshouse.com",
 
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   cronSecret: process.env.CRON_SECRET ?? "",
@@ -51,10 +60,19 @@ export const isStripeConfigured = Boolean(
 
 export const isPayPalConfigured = Boolean(env.paypalClientId && env.paypalClientSecret);
 
-export const isEmailConfigured = Boolean(
-  (env.emailProvider === "sendgrid" ? env.sendgridApiKey : env.resendApiKey) &&
-    env.emailFrom,
-);
+/** Resolves EMAIL_PROVIDER to the transport we actually implement. */
+export const emailTransport = (
+  ["smtp", "sendgrid"].includes(env.emailProvider) ? env.emailProvider : "resend"
+) as "smtp" | "sendgrid" | "resend";
+
+const emailCredentialsPresent =
+  emailTransport === "smtp"
+    ? Boolean(env.smtpHost && env.smtpUser && env.smtpPassword)
+    : emailTransport === "sendgrid"
+      ? Boolean(env.sendgridApiKey)
+      : Boolean(env.resendApiKey);
+
+export const isEmailConfigured = Boolean(emailCredentialsPresent && env.emailFrom);
 
 /**
  * Demo payments let you exercise the whole checkout → webhook-free fulfilment
