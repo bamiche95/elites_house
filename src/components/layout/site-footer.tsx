@@ -20,8 +20,7 @@ export function SiteFooter() {
               {siteConfig.name}
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-mocha">
-              A London atelier for 100% Remy human hair — double-drawn bundles, HD lace
-              wigs, closures and frontals. Sourced with care, finished by hand.
+             No. 1 luxury hair, haircare and hair accessories destination. We are a team of hair enthusiasts, stylists and product experts who are passionate about helping you achieve your best hair yet.
             </p>
 
             <div className="mt-6 space-y-2 text-sm text-mocha">

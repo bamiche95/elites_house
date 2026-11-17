@@ -117,8 +117,18 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 | Admin    | `admin@theeliteshouse.com` | `LushAdmin2026!` |
 | Customer | `customer@example.com`  | `LushCustomer2026!` |
 
-Override these with `SEED_ADMIN_*` / `SEED_CUSTOMER_*` **before** seeding. Change the admin
-password immediately on a real deployment (Account → Settings).
+Override these with `SEED_ADMIN_*` / `SEED_CUSTOMER_*` **before** seeding. The defaults are in this
+repo, so change the admin password on every real deployment — from Account → Settings while signed
+in, or from the terminal (masked prompt, 12+ characters, refuses the documented default):
+
+```bash
+npm run admin:password -- --email you@domain.com              # rotate an existing account
+npm run admin:password -- --email new@domain.com --create     # add a second admin
+npm run admin:password -- --email you@domain.com --password '…'   # scripted / CI (or ADMIN_NEW_PASSWORD)
+```
+
+The script writes straight to `DATABASE_URL` with bcrypt cost 12, so it also works when nobody can
+sign in. Add `--promote` to turn an existing CUSTOMER account into an admin.
 
 ---
 
@@ -207,6 +217,7 @@ round-trip.
 | `NEXT_PUBLIC_INSTAGRAM_URL`    | Footer social link.                                         |
 | `CRON_SECRET`                  | Bearer token protecting `/api/cron/expire-orders`.           |
 | `SEED_ADMIN_*`                 | Admin email/password written by `npm run db:seed`.           |
+| `ADMIN_NEW_PASSWORD`           | Optional password for `npm run admin:password` (scripted runs); the script prompts when unset. |
 | `SEED_CUSTOMER_*`              | Demo customer email/password written by `npm run db:seed`.   |
 
 ---
@@ -330,6 +341,17 @@ deliveries are absorbed by the unique `PaymentTransaction.providerRef` and by an
   `NEXT_PUBLIC_ORDERS_EMAIL` (`orders@`).
 - `npm run email:check [inbox]` logs into the SMTP server, reports the greeting/certificate result
   and delivers one test message — the quickest way to prove a mailbox before blaming the app.
+- `npm run email:check -- --dns` reports **MX / SPF / DKIM / DMARC** for the `EMAIL_FROM` domain, the
+  address behind `mail.<domain>`, and then opens an SMTP conversation with every MX to confirm it
+  greets and accepts `NEXT_PUBLIC_CONTACT_EMAIL`; it exits non-zero when any of that is wrong. A
+  mailbox can authenticate and still be unreachable: without **MX** nothing on the internet can
+  deliver to `contact@` / `orders@`, and without **SPF + DKIM (+ DMARC)** Gmail/Outlook treat outbound
+  mail as forged and spam-file or reject it. The zone lives wherever the nameservers point (Vercel DNS
+  for this project), *not* at the mail host — and not in the registrar's zone editor, which goes inert
+  the moment the nameservers are delegated elsewhere. Shared hosting
+  (`premium709.web-hosting.com`) receives mail through the provider's relay cluster
+  (`mx*-hosting.jellyfish.systems`), so MX must target those relays: the web server itself never
+  greets on port 25, and an MX pointed at it makes every delivery time out.
 - Transactional emails: order confirmation, order status updates (processing, dispatched,
   completed, cancelled/refunded), guest account setup + reminder, welcome, admin new-order
   alert and the contact-form acknowledgement.
@@ -423,6 +445,10 @@ The back office lives at `/admin` and is gated twice: `src/middleware.ts` checks
 All admin mutations are React Server Actions that take `FormData`, re-check the session, and
 revalidate the affected paths — there are no unprotected admin API routes.
 
+Admins are `User` rows with `role = "ADMIN"`; there is no in-app user-management screen, so add or
+reset one from the terminal with `npm run admin:password -- --email … --create` (or `--promote` for
+an existing customer account).
+
 ---
 
 ## Project structure
@@ -472,8 +498,9 @@ scripts/generate-icons.mjs      sharp-based brand asset generator
 | `npm run db:studio` | Open Prisma Studio.                                            |
 | `npm run db:diff`   | Print the SQL diff between the schema and an empty database.    |
 | `npm run icons`     | Regenerate PWA icons and editorial imagery in `/public`.       |
-| `npm run email:check` | Verify the SMTP mailbox and send one test message.           |
+| `npm run email:check` | Verify the SMTP mailbox and send one test message (`--dns` reports MX/SPF/DKIM/DMARC). |
 | `npm run media:check` | Validate upload rules + round-trip the active storage adapter.|
+| `npm run admin:password` | Rotate (or create, `--create`) an admin password in the database. |
 | `npm run setup`     | `db:deploy` + `db:seed` + `icons` — first-run convenience.      |
 
 ---
@@ -538,8 +565,10 @@ detected automatically.
    `/sitemap.xml`, `/robots.txt` and
    `curl -H "Authorization: Bearer $CRON_SECRET" https://your-domain/api/cron/expire-orders`
    on the live domain.
-6. **Harden**: sign in as the admin and change the seeded password, set `CRON_SECRET`, confirm
-   the cron appears under Project → Cron Jobs, and add the domain in Vercel → Domains.
+6. **Harden**: change the seeded admin password (Account → Settings, or
+   `npm run admin:password -- --email you@domain.com` against the production `DATABASE_URL`), set
+   `CRON_SECRET`, confirm the cron appears under Project → Cron Jobs, and add the domain in
+   Vercel → Domains.
 
 Notes
 
@@ -593,6 +622,8 @@ A five-minute pass that exercises the money paths (all verified against a seeded
 | `prisma migrate deploy` fails with *relation already exists* (`P3005`) | The database was created with `db push`. Baseline it once: `npx prisma migrate resolve --applied 00000000000000_init`, then re-run `db:deploy`. |
 | `[next-auth][error][NO_SECRET]` or sessions silently drop | `NEXTAUTH_SECRET` is missing or shorter than 32 bytes. |
 | Login succeeds then bounces to `/login` | `NEXTAUTH_URL` must match the exact origin (including `https://` in production, no trailing slash). Clear cookies afterwards. |
+| Locked out of `/admin` / forgotten admin password | `npm run admin:password -- --email you@domain.com` (add `--create` if the account is gone) rewrites the hash against that environment's `DATABASE_URL`. Existing JWTs stay valid until they expire, so sign out and back in; there is no email-based reset flow. |
+| `admin:password` fails with *the URL must start with the protocol `postgresql://`* | A placeholder or stale `DATABASE_URL` is exported in that shell — shell values shadow `.env`. Paste the real pooled URL inside single quotes (`$env:DATABASE_URL='postgresql://…'`, so a `$` in the password isn't expanded), or run `Remove-Item Env:\DATABASE_URL` to fall back to `.env`. |
 | "Continue with Google" is missing | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are unset — the button is hidden by design. |
 | Card or PayPal tabs are missing at checkout | Stripe/PayPal keys are unset; the "Pay in test mode" method only appears in development. |
 | Emails never arrive | `EmailLog` shows `SKIPPED` when no provider key is configured (`RESEND_API_KEY` or `SENDGRID_API_KEY` + `EMAIL_FROM`). Check spam and domain verification too. |
@@ -602,6 +633,8 @@ A five-minute pass that exercises the money paths (all verified against a seeded
 | Types complain about missing Prisma fields | `npm run db:generate` after editing `prisma/schema.prisma`. |
 | Order emails sit at `SKIPPED` in `EmailLog` | No provider configured — set `EMAIL_PROVIDER` + `SMTP_*` (or an ESP key) and run `npm run email:check`. |
 | `npm run email:check` fails with `535`/`530` | Wrong mailbox password or the server blocked the IP — confirm the mailbox logs in via webmail first. |
+| Mail to `contact@` / `orders@` never arrives even though sending works | No **MX** in the *live* zone (or an MX pointed at the web server), so senders have nowhere to deliver even though SMTP login and local delivery are fine. Run `npm run email:check -- --dns`; the records often already exist in the registrar's zone editor but are inert while the nameservers point elsewhere (Vercel for this project) — recreate MX/SPF/DKIM/DMARC plus `A mail` in the live zone. MX must target the provider's relays (`mx*-hosting.jellyfish.systems`); `mail.<domain>` opens port 25 but never greets, so mail to it times out. `550 No Such User Here` from `email:check <address>` means the mailbox is missing; acceptance proves it exists. |
+| App mail is spam-filed or rejected with `550 5.7.x` | No **SPF/DKIM/DMARC**. Publish `TXT @ → v=spf1 …` for the SMTP host, the host's `default._domainkey` DKIM record and `TXT _dmarc → v=DMARC1; p=none; rua=mailto:contact@…`, then re-check with `npm run email:check -- --dns`. |
 | `next lint` warns that the command is deprecated | Expected on Next 15 — the ESLint config still runs; Next 16 will require the ESLint CLI. |
 | Uploads fail with `503` *Image storage is not configured* | No `BLOB_READ_WRITE_TOKEN`: connect a Vercel Blob store to the project and redeploy (or set `MEDIA_PROVIDER=local` for local dev). |
 | Upload returns `413` / *Request Entity Too Large* | The file exceeds the 4 MB ceiling or Vercel's ~4.5 MB body cap. Compress the image; `MEDIA_MAX_BYTES` only lowers the limit. |

@@ -22,6 +22,7 @@
     "stripe:simulate": "node scripts/stripe-simulate-event.mjs",
     "email:check": "node scripts/email-check.mjs",
     "media:check": "tsx scripts/media-check.ts",
+    "admin:password": "tsx scripts/admin-password.ts",
     "setup": "prisma migrate deploy && prisma db seed && node scripts/generate-icons.mjs"
   },
   "prisma": {
