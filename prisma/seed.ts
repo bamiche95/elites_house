@@ -7,6 +7,8 @@
 import { PrismaClient, type Prisma, type Texture } from "@prisma/client";
 import { hash } from "bcryptjs";
 
+import { emailTemplates } from "../src/lib/email/template-copy";
+
 const prisma = new PrismaClient();
 
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? "admin@theeliteshouse.com";
@@ -905,65 +907,6 @@ const banners = [
     placement: "SHOP_HERO" as const,
     position: 1,
     isActive: true,
-  },
-];
-
-const emailTemplates = [
-  {
-    name: "welcome",
-    description: "Sent when a shopper creates an account.",
-    subject: "Welcome to The Elites House",
-    preheader: "Your account is ready — here's where to start.",
-    bodyHtml:
-      '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">Welcome to The Elites House.</h1><p>Hi {{customer_first_name}}, we\'re so glad you\'re here. Your account is ready — save addresses, track orders and keep your wishlist in one place.</p><p><a href="{{site_url}}/shop">Explore the collection</a></p>',
-  },
-  {
-    name: "order-confirmation",
-    description: "Payment confirmed — includes the guest account setup link.",
-    subject: "Order {{order_number}} confirmed — The Elites House",
-    preheader: "We're preparing your order by hand.",
-    bodyHtml:
-      '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">Thank you, {{customer_first_name}}.</h1><p>Your order <strong>{{order_number}}</strong> is confirmed. Our atelier team is preparing everything by hand.</p>{{order_summary}}<p>{{guest_setup_block}}</p>',
-  },
-  {
-    name: "order-dispatched",
-    description: "Sent when the atelier marks an order as dispatched.",
-    subject: "Your order is on its way — {{order_number}}",
-    preheader: "Tracking details inside.",
-    bodyHtml:
-      '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">On its way</h1><p>Hi {{customer_first_name}}, your order has left the atelier. Tracking: <strong>{{tracking_number}}</strong> ({{tracking_carrier}}).</p>{{order_summary}}',
-  },
-  {
-    name: "order-cancelled",
-    description: "Sent when an order is cancelled and stock released.",
-    subject: "Your order {{order_number}} has been cancelled",
-    preheader: "Any captured payment is refunded automatically.",
-    bodyHtml:
-      '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">Order cancelled</h1><p>Hi {{customer_first_name}}, your order has been cancelled. Any captured payment is refunded to your original method within 3–5 working days.</p>',
-  },
-  {
-    name: "guest-setup",
-    description: "One-time password setup link for guest buyers.",
-    subject: "Finish setting up your The Elites House account",
-    preheader: "One click to set your password.",
-    bodyHtml:
-      '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">One last step</h1><p>Hi {{customer_first_name}}, tap below to choose a password. This link expires in 48 hours.</p><p><a href="{{setup_url}}">Set my password</a></p>',
-  },
-  {
-    name: "restock-alert",
-    description: "Use for back-in-stock campaigns.",
-    subject: "Back in stock: {{product_name}}",
-    preheader: "Your length is available again.",
-    bodyHtml:
-      '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">Back in the atelier</h1><p>{{product_name}} has been restocked. Small batches sell through quickly.</p><p><a href="{{product_url}}">Shop now</a></p>',
-  },
-  {
-    name: "newsletter",
-    description: "Base layout for the fortnightly Atelier Letter.",
-    subject: "The Atelier Letter",
-    preheader: "Restocks, styling notes and early access.",
-    bodyHtml:
-      '<h1 style="font-family:Georgia,serif;font-size:26px;margin:0 0 16px;">The Atelier Letter</h1><p>Write your introduction here, then add product links and styling notes.</p><p><a href="{{site_url}}/shop">Shop the collection</a></p>',
   },
 ];
 

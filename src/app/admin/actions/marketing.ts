@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/auth-helpers";
+import { emailPlainToHtml } from "@/lib/email/plain-text";
 import { sendEmail } from "@/lib/email/send";
 import { campaignEmail } from "@/lib/email/templates";
 import { env } from "@/lib/env";
@@ -19,13 +20,16 @@ function backTo(tab: string, params: Record<string, string> = { saved: "1" }): n
 export async function saveEmailTemplateAction(formData: FormData) {
   await requireAdmin();
 
+  const bodyInput = formString(formData, "bodyHtml");
+  const bodyMode = formString(formData, "bodyMode");
+
   const parsed = emailTemplateSchema.safeParse({
     id: formString(formData, "id"),
     name: formString(formData, "name"),
     description: formOptional(formData, "description"),
     subject: formString(formData, "subject"),
     preheader: formOptional(formData, "preheader"),
-    bodyHtml: formString(formData, "bodyHtml"),
+    bodyHtml: bodyMode === "plain" ? emailPlainToHtml(bodyInput) : bodyInput,
     isActive: formBool(formData, "isActive"),
   });
 

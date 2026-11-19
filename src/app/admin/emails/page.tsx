@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { saveEmailTemplateAction, sendCampaignAction } from "@/app/admin/actions/marketing";
+import { EmailTemplateBodyEditor } from "@/components/admin/email-template-body-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/form";
+import { siteConfig } from "@/lib/constants";
+import { renderTemplatePreview } from "@/lib/email/template-copy";
+import { emailLayout } from "@/lib/email/templates";
 import { env, isEmailConfigured } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime } from "@/lib/utils";
@@ -13,6 +17,25 @@ export const metadata: Metadata = {
   title: "Emails",
   robots: { index: false, follow: false },
 };
+
+function formatTemplateName(name: string) {
+  const words = name.replace(/[-_]+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function previewForTemplate(template: {
+  subject: string;
+  preheader: string | null;
+  bodyHtml: string;
+}) {
+  return emailLayout({
+    title: template.subject,
+    preheader: template.preheader ?? template.subject,
+    content: renderTemplatePreview(template.bodyHtml, siteConfig.url),
+    footerNote: "Preview with sample data — live emails use the same atelier shell.",
+    unsubscribeUrl: `${siteConfig.url}/unsubscribe?token=preview`,
+  });
+}
 
 export default async function AdminEmailsPage({
   searchParams,
@@ -39,8 +62,9 @@ export default async function AdminEmailsPage({
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl text-espresso">Emails</h1>
-        <p className="mt-1 text-sm text-mocha">
-          Brand templates and the campaign sender. Transactional emails use built-in layouts.
+        <p className="mt-1 max-w-2xl text-sm text-mocha">
+          Every outbound email shares one atelier shell — ivory, espresso and a gold keyline.
+          Preview each template with sample data, then edit the copy stored for campaigns.
         </p>
       </div>
 
@@ -94,24 +118,101 @@ export default async function AdminEmailsPage({
 
       {tab === "templates" ? (
         <div className="space-y-4">
-          <p className="text-sm text-mocha">
-            Editable copy for campaigns and reference for the automated emails. Placeholders use
-            double braces, e.g. {"{{order_number}}"}.
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 border border-line bg-cream/60 px-4 py-3">
+            <p className="text-sm text-mocha">
+              Editable copy for campaigns and reference for the automated sends. Placeholders use
+              double braces, e.g.{" "}
+              <code className="bg-ivory px-1.5 py-0.5 text-[0.7rem] text-espresso">
+                {"{{order_number}}"}
+              </code>
+              .
+            </p>
+            <span className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-gold">
+              600px &middot; Gmail / Outlook safe
+            </span>
+          </div>
+          {templates.length === 0 ? (
+            <p className="border border-dashed border-line bg-cream/40 px-4 py-6 text-sm text-mocha">
+              No templates found. Run{" "}
+              <code className="bg-ivory px-1.5 py-0.5 text-[0.7rem] text-espresso">
+                npm run emails:refresh
+              </code>{" "}
+              to load the branded copy.
+            </p>
+          ) : null}
           {templates.map((template) => (
-            <details key={template.id} className="border border-line bg-cream">
-              <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 px-4 py-3">
-                <span className="text-sm text-espresso">{template.name}</span>
-                <span className="flex items-center gap-2">
+            <article key={template.id} className="overflow-hidden border border-line bg-ivory">
+              <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-5 py-4">
+                <div className="min-w-0">
+                  <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-gold">
+                    Template
+                  </p>
+                  <h2 className="mt-1 font-display text-xl text-espresso">
+                    {formatTemplateName(template.name)}
+                  </h2>
+                  {template.description ? (
+                    <p className="mt-1 max-w-xl text-xs leading-relaxed text-mocha">
+                      {template.description}
+                    </p>
+                  ) : null}
+                  <p className="mt-2 truncate text-[0.65rem] text-mocha/80">
+                    Subject &middot; {template.subject}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2 text-right">
                   <Badge tone={template.isActive ? "success" : "neutral"}>
                     {template.isActive ? "Active" : "Hidden"}
                   </Badge>
-                  <span className="text-[0.62rem] uppercase tracking-[0.12em] text-mocha">
-                    {formatDateTime(template.updatedAt)}
+                  <span className="text-[0.58rem] uppercase tracking-[0.12em] text-mocha">
+                    Updated {formatDateTime(template.updatedAt)}
                   </span>
-                </span>
-              </summary>
-              <form action={saveEmailTemplateAction} className="space-y-4 border-t border-line p-4">
+                </div>
+              </header>
+              <div className="border-b border-line bg-cream/40 px-3 py-4 sm:px-5">
+                <div className="mb-2 flex items-center justify-between gap-3 px-1">
+                  <span className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-mocha">
+                    Brand preview
+                  </span>
+                  <span className="text-[0.58rem] uppercase tracking-[0.12em] text-mocha/70">
+                    Sample data
+                  </span>
+                </div>
+                <div className="overflow-hidden border border-line bg-ivory shadow-[0_24px_50px_-42px_rgba(23,17,14,0.65)]">
+                  <div className="flex items-center gap-2 border-b border-line bg-cream px-3 py-2">
+                    <span className="flex gap-1" aria-hidden="true">
+                      <span className="h-1.5 w-1.5 rounded-full bg-sand" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-sand" />
+                      <span className="h-1.5 w-1.5 rounded-full bg-gold/60" />
+                    </span>
+                    <span className="truncate text-[0.6rem] tracking-[0.08em] text-mocha">
+                      mail.theeliteshouse.com
+                    </span>
+                  </div>
+                  <iframe
+                    title={`${formatTemplateName(template.name)} email preview`}
+                    srcDoc={previewForTemplate(template)}
+                    sandbox=""
+                    loading="lazy"
+                    className="h-[36rem] w-full bg-ivory"
+                  />
+                </div>
+              </div>
+              <details className="group">
+                <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 px-5 py-4 hover:bg-cream/50">
+                  <span className="text-[0.66rem] font-semibold uppercase tracking-[0.18em] text-espresso">
+                    Edit copy
+                  </span>
+                  <span className="text-[0.6rem] uppercase tracking-[0.12em] text-mocha group-open:hidden">
+                    Open editor
+                  </span>
+                  <span className="hidden text-[0.6rem] uppercase tracking-[0.12em] text-mocha group-open:inline">
+                    Close
+                  </span>
+                </summary>
+              <form
+                action={saveEmailTemplateAction}
+                className="space-y-4 border-t border-line bg-cream/30 p-5"
+              >
                 <input type="hidden" name="id" value={template.id} />
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Template name" htmlFor={`tpl-name-${template.id}`}>
@@ -147,15 +248,10 @@ export default async function AdminEmailsPage({
                     />
                   </Field>
                 </div>
-                <Field label="HTML body" htmlFor={`tpl-body-${template.id}`}>
-                  <Textarea
-                    id={`tpl-body-${template.id}`}
-                    name="bodyHtml"
-                    defaultValue={template.bodyHtml}
-                    className="min-h-40 font-mono text-xs"
-                    required
-                  />
-                </Field>
+                <EmailTemplateBodyEditor
+                  id={`tpl-body-${template.id}`}
+                  defaultValue={template.bodyHtml}
+                />
                 <Checkbox
                   id={`tpl-active-${template.id}`}
                   name="isActive"
@@ -166,7 +262,8 @@ export default async function AdminEmailsPage({
                   Save template
                 </Button>
               </form>
-            </details>
+              </details>
+            </article>
           ))}
         </div>
       ) : null}
@@ -175,12 +272,16 @@ export default async function AdminEmailsPage({
         <div className="space-y-6">
           <form
             action={sendCampaignAction}
-            className="space-y-4 border border-gold/40 bg-gold/10 p-4"
+            className="space-y-4 border border-line border-t-2 border-t-gold bg-cream/40 p-4 sm:p-5"
           >
             <div>
-              <h2 className="font-display text-xl text-espresso">Compose a campaign</h2>
-              <p className="mt-1 text-xs text-mocha">
-                Up to 200 recipients per run. Every email includes a one-click unsubscribe link.
+              <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-gold">
+                Campaign sender
+              </p>
+              <h2 className="mt-1 font-display text-xl text-espresso">Compose a campaign</h2>
+              <p className="mt-1 max-w-2xl text-xs text-mocha">
+                Sent through the shared atelier shell. Up to 200 recipients per run, and every
+                email includes a one-click unsubscribe link.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -211,7 +312,10 @@ export default async function AdminEmailsPage({
           </form>
 
           <section>
-            <h2 className="font-display text-xl text-espresso">Recent campaigns</h2>
+            <p className="text-[0.58rem] font-semibold uppercase tracking-[0.18em] text-gold">
+              History
+            </p>
+            <h2 className="mt-1 font-display text-xl text-espresso">Recent campaigns</h2>
             <div className="mt-3 overflow-x-auto border border-line">
               <table className="w-full min-w-[34rem] text-left text-sm">
                 <thead className="bg-cream text-[0.6rem] uppercase tracking-[0.16em] text-mocha">

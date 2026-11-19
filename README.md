@@ -55,8 +55,10 @@ Stripe + PayPal · SMTP (nodemailer) / Resend / SendGrid · Zustand · Zod · @d
 - Signed-in checkout, saved addresses, order history and order detail with tracking.
 - Credentials (bcrypt) + optional Google OAuth, password change, marketing preferences,
   one-click unsubscribe tokens.
-- Stripe Payment Element (card, Apple Pay, Google Pay), PayPal Buttons and a
-  development-only "Pay in test mode" method (hard-blocked when `NODE_ENV=production`).
+- Stripe Payment Element with a tile for each method enabled in the default Stripe
+  Payment Method Configuration (Card, Klarna, PayPal, Revolut Pay, Amazon Pay, Pay by Bank),
+  PayPal Buttons and a development-only "Test payment" method (hard-blocked when
+  `NODE_ENV=production`).
 
 **Admin back office** (`/admin`, role-gated)
 
@@ -158,14 +160,14 @@ Vercel → Settings → Environment Variables in production.
 
 | Variable                             | Notes                                                      |
 | ------------------------------------ | ---------------------------------------------------------- |
-| `STRIPE_SECRET_KEY`                  | Enables the card / Apple Pay / Google Pay tab.             |
+| `STRIPE_SECRET_KEY`                  | Enables dynamic Stripe method tiles and the Payment Element. |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Client-side Stripe key.                                    |
 | `STRIPE_WEBHOOK_SECRET`              | From `stripe listen` or the Stripe Dashboard webhook.      |
-| `NEXT_PUBLIC_PAYPAL_CLIENT_ID`       | Enables the PayPal tab.                                    |
+| `NEXT_PUBLIC_PAYPAL_CLIENT_ID`       | Enables the dedicated PayPal tile.                         |
 | `PAYPAL_CLIENT_SECRET`               | Server-side PayPal credentials.                            |
 | `PAYPAL_WEBHOOK_ID`                  | Webhook ID used to verify `PAYPAL-TRANSMISSION-*` headers. |
 | `PAYPAL_ENV`                         | `sandbox` (default) or `live`.                             |
-| `ALLOW_DEMO_PAYMENTS`                | `true` enables "Pay in test mode" — **development only**.  |
+| `ALLOW_DEMO_PAYMENTS`                | `true` enables the "Test payment" tile — **development only**. |
 
 ### Email
 
@@ -271,9 +273,9 @@ The checkout flow is identical for every provider:
 
 | Provider | Client                                 | Server confirmation                    |
 | -------- | -------------------------------------- | -------------------------------------- |
-| Stripe   | Payment Element (card/wallet)          | `/api/webhooks/stripe` + `/api/checkout/stripe-confirm` |
+| Stripe   | Payment Element (selected method)      | `/api/webhooks/stripe` + `/api/checkout/stripe-confirm` |
 | PayPal   | `@paypal/react-paypal-js` buttons      | `/api/checkout/paypal-capture` + `/api/webhooks/paypal` |
-| Demo     | "Pay in test mode" (dev only)          | `POST /api/checkout/demo`              |
+| Demo     | "Test payment" (dev only)              | `POST /api/checkout/demo`              |
 
 Unpaid orders are released automatically: `expireStaleOrders(hours = 2)` returns the reserved
 stock and cancels the order. It runs from `/api/cron/expire-orders` and from the "Release
@@ -283,9 +285,12 @@ expired stock" button on the admin dashboard.
 
 Payments use the Stripe **test** keys (`sk_test_…` / `pk_test_…`). Use card
 `4242 4242 4242 4242`, any future expiry and any CVC (declines: `4000 0000 0000 0002`).
-Test-mode payment methods enabled in the Stripe Dashboard (Klarna, PayPal, Revolut Pay,
-Amazon Pay) also appear in the Payment Element and redirect back to
-`/checkout/success?order=…`, where `StripeConfirm` verifies the PaymentIntent.
+Checkout reads the root default **Payment Method Configuration** from the Stripe
+Dashboard and renders a tile for each supported method that is enabled: Card, Klarna,
+PayPal, Revolut Pay, Amazon Pay and Pay by Bank. Toggle them under **Settings → Payments
+→ Payment methods**; the server cache refreshes every 10 seconds in development and
+5 minutes in production. Redirect methods return to `/checkout/success?order=…`, where
+`StripeConfirm` verifies the PaymentIntent.
 
 Fulfilment happens in two independent places, so a card payment is marked paid even
 without a webhook listener: `POST /api/checkout/stripe-confirm` (called by the success
@@ -301,7 +306,7 @@ npm run stripe:listen            # prints whsec_… — paste it into .env, rest
 
 # Option B – no CLI: simulate the card charge *and* the webhook
 # 1. STRIPE_WEBHOOK_SECRET="whsec_local_dev" in .env, then restart `npm run dev`
-# 2. add to bag → continue to payment → copy the order reference
+# 2. add to bag → continue to payment → choose Card → copy the order reference
 npm run stripe:simulate -- LT-2611-ABCDE succeeded   # pays with pm_card_visa
 npm run stripe:simulate -- LT-2611-ABCDE failed      # pm_card_chargeDeclined → PAYMENT_FAILED
 ```
@@ -542,8 +547,8 @@ detected automatically.
    NEXT_PUBLIC_SITE_URL=https://your-domain, CRON_SECRET
    ```
 
-   Add the Stripe/PayPal/email keys if you use them and leave `ALLOW_DEMO_PAYMENTS` unset ("Pay in
-   test mode" is hard-blocked in production builds). `NEXT_PUBLIC_*` values are inlined at build
+   Add the Stripe/PayPal/email keys if you use them and leave `ALLOW_DEMO_PAYMENTS` unset ("Test
+   payment" is hard-blocked in production builds). `NEXT_PUBLIC_*` values are inlined at build
    time, so redeploy after changing them.
 
    ```bash
@@ -595,7 +600,7 @@ A five-minute pass that exercises the money paths (all verified against a seeded
    `/payment-info`, `/contact`, `/login`, `/register` all render `200`.
 2. Shop → filter by texture/length → sort → paginate; open a product, pick a length, add to bag.
 3. Cart: change qty, apply a seeded coupon, see the free-shipping threshold behave.
-4. Checkout as a guest with **Pay in test mode** → order confirmation page → order appears in
+4. Checkout as a guest with **Test payment** → order confirmation page → order appears in
    `/account/orders` and in **Admin → Orders** as `PAID`/`PROCESSING`, variant stock decremented.
 5. The confirmation email (or `EmailLog` row) carries the guest account setup link
    (`/guest-setup/[token]`) — open it, set a password, land in `/account`.
@@ -625,7 +630,7 @@ A five-minute pass that exercises the money paths (all verified against a seeded
 | Locked out of `/admin` / forgotten admin password | `npm run admin:password -- --email you@domain.com` (add `--create` if the account is gone) rewrites the hash against that environment's `DATABASE_URL`. Existing JWTs stay valid until they expire, so sign out and back in; there is no email-based reset flow. |
 | `admin:password` fails with *the URL must start with the protocol `postgresql://`* | A placeholder or stale `DATABASE_URL` is exported in that shell — shell values shadow `.env`. Paste the real pooled URL inside single quotes (`$env:DATABASE_URL='postgresql://…'`, so a `$` in the password isn't expanded), or run `Remove-Item Env:\DATABASE_URL` to fall back to `.env`. |
 | "Continue with Google" is missing | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are unset — the button is hidden by design. |
-| Card or PayPal tabs are missing at checkout | Stripe/PayPal keys are unset; the "Pay in test mode" method only appears in development. |
+| Payment tiles are missing at checkout | Stripe/PayPal keys are unset, or no supported method is enabled in your default Stripe Payment Method Configuration. The "Test payment" tile only appears in development. |
 | Emails never arrive | `EmailLog` shows `SKIPPED` when no provider key is configured (`RESEND_API_KEY` or `SENDGRID_API_KEY` + `EMAIL_FROM`). Check spam and domain verification too. |
 | `/api/cron/expire-orders` returns `401`/`503` | Set `CRON_SECRET` and send `Authorization: Bearer <secret>` (Vercel does this for you). |
 | `next/image` returns `400` for a pasted image URL | Add the host to `images.remotePatterns` in `next.config.ts`. |

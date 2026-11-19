@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
 
 import { sendAdminNotification, sendEmail } from "@/lib/email/send";
-import { emailLayout, escapeHtml } from "@/lib/email/templates";
+import {
+  emailEyebrow,
+  emailHeading,
+  emailMetaRows,
+  emailPanel,
+  emailPanelLabel,
+  emailSmallText,
+  emailText,
+  escapeHtml,
+} from "@/lib/email/brand";
+import { emailLayout } from "@/lib/email/templates";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
@@ -47,11 +57,22 @@ export async function POST(request: Request) {
         title: "We've received your message",
         preheader: "A real person will reply within one working day.",
         content: `
-          <p style="margin:0 0 12px;">Hi ${escapeHtml(name.split(" ")[0] || "there")},</p>
-          <p style="margin:0 0 12px;">Thank you for writing to the atelier. We've received your message and will reply within one working day.</p>
-          <p style="margin:0 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#6f5544;">Your message</p>
-          <p style="margin:0 0 8px;font-weight:bold;">${escapeHtml(subject)}</p>
-          <p style="margin:0;">${escapeHtml(message).replace(/\n/g, "<br />")}</p>
+          ${emailEyebrow("Message received")}
+          ${emailHeading(`Thank you, ${name.split(" ")[0] || "there"}.`)}
+          ${emailText(
+            "Thank you for writing to the atelier. We've received your message and will reply within one working day.",
+          )}
+          ${emailPanel(
+            `${emailPanelLabel("Your message")}
+             ${emailText(`<strong>${escapeHtml(subject)}</strong>`, {
+               margin: "0 0 6px",
+               size: 14,
+             })}
+             ${emailText(escapeHtml(message).replace(/\n/g, "<br />"), {
+               margin: "0",
+               size: 14,
+             })}`,
+          )}
         `,
         footerNote: "If your enquiry is urgent, reply to this email and we'll prioritise it.",
       }),
@@ -62,9 +83,25 @@ export async function POST(request: Request) {
       emailLayout({
         title: "New contact message",
         content: `
-          <p style="margin:0 0 8px;"><strong>${escapeHtml(name)}</strong> · ${escapeHtml(email)}${phone ? ` · ${escapeHtml(phone)}` : ""}</p>
-          <p style="margin:0 0 8px;font-weight:bold;">${escapeHtml(subject)}</p>
-          <p style="margin:0;">${escapeHtml(message).replace(/\n/g, "<br />")}</p>
+          ${emailEyebrow("Contact form")}
+          ${emailHeading("New contact message")}
+          ${emailMetaRows([
+            { label: "Name", value: name },
+            { label: "Email", value: email },
+            ...(phone ? [{ label: "Phone", value: phone }] : []),
+          ])}
+          ${emailPanel(
+            `${emailPanelLabel("Message")}
+             ${emailText(`<strong>${escapeHtml(subject)}</strong>`, {
+               margin: "0 0 6px",
+               size: 14,
+             })}
+             ${emailText(escapeHtml(message).replace(/\n/g, "<br />"), {
+               margin: "0",
+               size: 14,
+             })}`,
+          )}
+          ${emailSmallText("Reply directly to this email to answer the customer.", "0")}
         `,
       }),
       { to: env.contactEmail, replyTo: email.toLowerCase().trim() },

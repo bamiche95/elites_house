@@ -6,7 +6,8 @@
  *
  * 1. Finds the PaymentIntent that `POST /api/checkout/start` created for the order.
  * 2. Confirms it with a Stripe *test* payment method (`pm_card_visa`, or
- *    `pm_card_chargeDeclined` for the failure scenario).
+ *    `pm_card_chargeDeclined` for the failure scenario). The intent must be a
+ *    card intent — choose Card at checkout, not a redirect method.
  * 3. Signs a `payment_intent.succeeded` / `payment_intent.payment_failed` event with
  *    `STRIPE_WEBHOOK_SECRET` and posts it to `/api/webhooks/stripe`, exactly the way
  *    Stripe does — so signature verification, `markOrderPaid()` and the idempotency
@@ -69,6 +70,14 @@ try {
   }
   if (intent.livemode) {
     throw new Error("Refusing to simulate a live PaymentIntent. This script is test-mode only.");
+  }
+
+  const methodTypes = intent.payment_method_types ?? [];
+  if (methodTypes.length > 0 && !methodTypes.includes("card")) {
+    throw new Error(
+      `Intent ${intent.id} is restricted to ${methodTypes.join(", ")}. ` +
+        "This simulator only confirms card intents — choose Card at checkout.",
+    );
   }
 
   const returnUrl = `${siteUrl}/checkout/success?order=${encodeURIComponent(order.orderNumber)}`;

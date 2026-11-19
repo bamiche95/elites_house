@@ -181,7 +181,7 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
 };
 
 export const PAYMENT_PROVIDER_LABELS: Record<string, string> = {
-  STRIPE: "Card / Apple Pay / Google Pay",
+  STRIPE: "Stripe",
   PAYPAL: "PayPal",
   DEMO: "Demo payment",
 };

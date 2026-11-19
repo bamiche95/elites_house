@@ -21,6 +21,7 @@
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
     "stripe:simulate": "node scripts/stripe-simulate-event.mjs",
     "email:check": "node scripts/email-check.mjs",
+    "emails:refresh": "tsx scripts/refresh-email-templates.ts",
     "media:check": "tsx scripts/media-check.ts",
     "admin:password": "tsx scripts/admin-password.ts",
     "setup": "prisma migrate deploy && prisma db seed && node scripts/generate-icons.mjs"

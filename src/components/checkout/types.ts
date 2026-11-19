@@ -1,3 +1,5 @@
+import type { StripePaymentMethodId } from "@/lib/payments/stripe-methods";
+
 export type AddressState = {
   fullName: string;
   phone: string;
@@ -18,6 +20,7 @@ export type StartResponse = {
   clientSecret?: string;
   paypalOrderId?: string;
   publishableKey?: string;
+  stripeMethod?: StripePaymentMethodId;
   error?: string;
   code?: string;
 };

@@ -2,11 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, CreditCard, Lock, Truck } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  FlaskConical,
+  Lock,
+  Truck,
+  type LucideIcon,
+} from "lucide-react";
 import { useState } from "react";
 
 import { AddressFields } from "@/components/checkout/address-fields";
 import { CheckoutSummary } from "@/components/checkout/checkout-summary";
+import { PaymentMethodBrand } from "@/components/checkout/payment-method-brand";
 import { PaymentStage } from "@/components/checkout/payment-stage";
 import {
   emptyAddress,
@@ -19,7 +27,21 @@ import { Field, Input, Textarea } from "@/components/ui/form";
 import { useToast } from "@/components/ui/toast";
 import { useCartStore } from "@/lib/cart-store";
 import { SHIPPING_METHODS, shippingCostFor } from "@/lib/constants";
+import {
+  STRIPE_PAYMENT_METHOD_OPTIONS,
+  type StripePaymentMethodId,
+} from "@/lib/payments/stripe-methods";
 import { cn, formatMoney } from "@/lib/utils";
+
+type PaymentOption = {
+  key: string;
+  provider: PaymentMode;
+  stripeMethod?: StripePaymentMethodId;
+  brand?: StripePaymentMethodId;
+  label: string;
+  description: string;
+  icon?: LucideIcon;
+};
 
 export type CheckoutFlowProps = {
   initialEmail: string;
@@ -27,10 +49,68 @@ export type CheckoutFlowProps = {
   initialPhone: string;
   initialAddress: AddressState | null;
   methods: { stripe: boolean; paypal: boolean; demo: boolean };
+  stripeMethods: StripePaymentMethodId[];
   stripePublishableKey: string;
   paypalClientId: string;
   isAuthenticated: boolean;
 };
+
+function buildPaymentOptions({
+  methods,
+  stripeMethods,
+}: Pick<CheckoutFlowProps, "methods" | "stripeMethods">): PaymentOption[] {
+  const enabledStripeMethods = new Set(stripeMethods);
+  const options: PaymentOption[] = [];
+  let directPayPalAdded = false;
+
+  for (const method of STRIPE_PAYMENT_METHOD_OPTIONS) {
+    // A dedicated PayPal integration wins over Stripe's PayPal method.
+    if (method.id === "paypal" && methods.paypal) {
+      options.push({
+        key: "paypal",
+        provider: "PAYPAL",
+        brand: "paypal",
+        label: "PayPal",
+        description: "Pay with your PayPal balance or linked account",
+      });
+      directPayPalAdded = true;
+      continue;
+    }
+
+    if (!methods.stripe || !enabledStripeMethods.has(method.id)) continue;
+
+    options.push({
+      key: `stripe:${method.id}`,
+      provider: "STRIPE",
+      stripeMethod: method.id,
+      brand: method.id,
+      label: method.label,
+      description: method.description,
+    });
+  }
+
+  if (methods.paypal && !directPayPalAdded) {
+    options.push({
+      key: "paypal",
+      provider: "PAYPAL",
+      brand: "paypal",
+      label: "PayPal",
+      description: "Pay with your PayPal balance or linked account",
+    });
+  }
+
+  if (methods.demo) {
+    options.push({
+      key: "demo",
+      provider: "DEMO",
+      label: "Test payment",
+      description: "Development only — no money moves",
+      icon: FlaskConical,
+    });
+  }
+
+  return options;
+}
 
 export function CheckoutFlow({
   initialEmail,
@@ -38,6 +118,7 @@ export function CheckoutFlow({
   initialPhone,
   initialAddress,
   methods,
+  stripeMethods,
   paypalClientId,
   isAuthenticated,
 }: CheckoutFlowProps) {
@@ -47,11 +128,10 @@ export function CheckoutFlow({
   const hydrated = useCartStore((state) => state.hydrated);
   const clearCart = useCartStore((state) => state.clear);
 
-  const defaultMode: PaymentMode = methods.stripe
-    ? "STRIPE"
-    : methods.paypal
-      ? "PAYPAL"
-      : "DEMO";
+  const paymentOptions = buildPaymentOptions({ methods, stripeMethods });
+  const [selectedKey, setSelectedKey] = useState(paymentOptions[0]?.key ?? "");
+  const selectedOption =
+    paymentOptions.find((option) => option.key === selectedKey) ?? paymentOptions[0];
 
   const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState(initialEmail);
@@ -59,7 +139,6 @@ export function CheckoutFlow({
     initialAddress ?? { ...emptyAddress, fullName: initialName, phone: initialPhone },
   );
   const [method, setMethod] = useState<"STANDARD" | "EXPRESS">("STANDARD");
-  const [mode, setMode] = useState<PaymentMode>(defaultMode);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [couponInput, setCouponInput] = useState("");
@@ -81,7 +160,15 @@ export function CheckoutFlow({
   const shippingPence = shippingCostFor(method, subtotalPence);
   const discountPence = coupon?.discountPence ?? 0;
   const totalPence = Math.max(0, subtotalPence - discountPence + shippingPence);
-  const paymentsAvailable = methods.stripe || methods.paypal || methods.demo;
+  const paymentsAvailable = paymentOptions.length > 0;
+  const securityLabel =
+    methods.stripe && methods.paypal
+      ? "Stripe & PayPal"
+      : methods.stripe
+        ? "Stripe"
+        : methods.paypal
+          ? "PayPal"
+          : "the payment provider";
 
   function validate() {
     const next: Record<string, string> = {};
@@ -144,6 +231,10 @@ export function CheckoutFlow({
       setStartError("Your bag is empty.");
       return;
     }
+    if (!selectedOption) {
+      setStartError("Choose a payment method to continue.");
+      return;
+    }
 
     setStarting(true);
     setStartError(null);
@@ -152,7 +243,9 @@ export function CheckoutFlow({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          provider: mode,
+          provider: selectedOption.provider,
+          stripeMethod:
+            selectedOption.provider === "STRIPE" ? selectedOption.stripeMethod : undefined,
           checkout: {
             email: email.trim(),
             name: shipping.fullName.trim(),
@@ -372,57 +465,62 @@ export function CheckoutFlow({
 
             <section>
               <h2 className="font-display text-2xl text-espresso">Payment method</h2>
-              <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                {[
-                  {
-                    id: "STRIPE" as const,
-                    label: "Card / Apple Pay",
-                    description: "Visa, Mastercard, Amex",
-                    enabled: methods.stripe,
-                  },
-                  {
-                    id: "PAYPAL" as const,
-                    label: "PayPal",
-                    description: "Pay with PayPal",
-                    enabled: methods.paypal,
-                  },
-                  {
-                    id: "DEMO" as const,
-                    label: "Test payment",
-                    description: "Development only",
-                    enabled: methods.demo,
-                  },
-                ].map((option) => (
-                  <label
-                    key={option.id}
-                    className={cn(
-                      "flex cursor-pointer flex-col gap-1 border px-4 py-3",
-                      mode === option.id && option.enabled
-                        ? "border-ink bg-cream"
-                        : "border-line",
-                      !option.enabled && "cursor-not-allowed opacity-50",
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      className="sr-only"
-                      checked={mode === option.id}
-                      disabled={!option.enabled}
-                      onChange={() => setMode(option.id)}
-                    />
-                    <span className="flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.12em] text-espresso">
-                      <CreditCard className="h-3.5 w-3.5 text-gold" />
-                      {option.label}
-                    </span>
-                    <span className="text-[0.65rem] text-mocha">{option.description}</span>
-                  </label>
-                ))}
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {paymentOptions.map((option) => {
+                  const active = selectedOption?.key === option.key;
+                  const Icon = option.icon;
+                  return (
+                    <label
+                      key={option.key}
+                      className={cn(
+                        "flex cursor-pointer flex-col gap-3 border px-4 py-3 transition-colors focus-within:border-ink",
+                        active ? "border-ink bg-cream" : "border-line hover:border-mocha/60",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        className="sr-only"
+                        checked={active}
+                        onChange={() => setSelectedKey(option.key)}
+                      />
+                      <span className="flex items-start justify-between gap-3">
+                        <span className="flex min-h-5 min-w-0 flex-wrap items-center">
+                          {option.brand ? (
+                            <PaymentMethodBrand method={option.brand} />
+                          ) : Icon ? (
+                            <Icon className="h-4 w-4 shrink-0 text-gold" />
+                          ) : null}
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border",
+                            active
+                              ? "border-ink bg-ink text-ivory"
+                              : "border-line text-transparent",
+                          )}
+                        >
+                          <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                        </span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[0.68rem] uppercase tracking-[0.12em] text-espresso">
+                          {option.label}
+                        </span>
+                        <span className="mt-1 block text-[0.65rem] leading-relaxed text-mocha">
+                          {option.description}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
               {!paymentsAvailable ? (
-                <p className="mt-3 border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
-                  No payment provider is configured. Add Stripe or PayPal keys to enable
-                  checkout.
+                <p className="mt-3 border border-danger/30 bg-danger/5 px-3 py-2 text-xs leading-relaxed text-danger">
+                  {methods.stripe
+                    ? "Stripe is connected, but no supported payment methods are enabled in your default Payment Method Configuration. Enable Card, Klarna, PayPal, Revolut Pay, Amazon Pay or Pay by Bank in the Stripe Dashboard."
+                    : "No payment provider is configured. Add Stripe or PayPal keys to enable checkout."}
                 </p>
               ) : null}
             </section>
@@ -459,7 +557,7 @@ export function CheckoutFlow({
                 : `Continue to payment · ${formatMoney(totalPence)}`}
             </Button>
             <p className="flex items-center justify-center gap-2 text-[0.65rem] text-mocha">
-              <Lock className="h-3 w-3" /> Secured by Stripe &amp; PayPal · We never store card
+              <Lock className="h-3 w-3" /> Secured by {securityLabel} · We never store card
               details
             </p>
           </div>
@@ -487,7 +585,13 @@ export function CheckoutFlow({
             {session ? (
               <PaymentStage
                 session={session}
-                mode={mode}
+                mode={
+                  session.mode === "paypal"
+                    ? "PAYPAL"
+                    : session.mode === "demo"
+                      ? "DEMO"
+                      : "STRIPE"
+                }
                 paypalClientId={paypalClientId}
                 totalPence={totalPence}
                 onPaid={() => finish(session.orderNumber)}

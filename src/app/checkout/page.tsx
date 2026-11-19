@@ -4,6 +4,7 @@ import { Lock, Shield, Truck } from "lucide-react";
 import { CheckoutFlow } from "@/components/checkout/checkout-flow";
 import { getSessionUser } from "@/lib/auth-helpers";
 import { env, paymentMethods } from "@/lib/env";
+import { getStripeMethodAvailability } from "@/lib/payments/stripe-method-config";
 import { prisma } from "@/lib/prisma";
 import { buildMetadata } from "@/lib/seo";
 
@@ -15,7 +16,10 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function CheckoutPage() {
-  const user = await getSessionUser();
+  const [user, stripeMethodAvailability] = await Promise.all([
+    getSessionUser(),
+    getStripeMethodAvailability(),
+  ]);
   const address = user
     ? await prisma.address.findFirst({
         where: { userId: user.id },
@@ -65,6 +69,7 @@ export default async function CheckoutPage() {
               : null
           }
           methods={paymentMethods}
+          stripeMethods={stripeMethodAvailability.methods}
           stripePublishableKey={env.stripePublishableKey}
           paypalClientId={env.paypalClientId}
           isAuthenticated={Boolean(user)}

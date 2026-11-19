@@ -37,6 +37,7 @@ export function PaymentStage({
           publishableKey={session.publishableKey}
           clientSecret={session.clientSecret}
           orderNumber={session.orderNumber}
+          stripeMethod={session.stripeMethod ?? "card"}
           onPaid={onPaid}
         />
       ) : null}
