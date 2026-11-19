@@ -31,7 +31,7 @@ jobs:
           config: p/owasp-top-ten
 
       - name: Dependency Vulnerability Scan (Trivy SCA)
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -89,7 +89,7 @@ jobs:
           -t app-security-check:${{ github.sha }} .
 
       - name: Scan Container Image for CVEs (Trivy)
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: 'app-security-check:${{ github.sha }}'
           severity: 'CRITICAL'
