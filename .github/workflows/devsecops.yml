@@ -36,6 +36,15 @@ jobs:
           scan-type: 'fs'
           scan-ref: '.'
           severity: 'HIGH,CRITICAL'
+          # Only fail on findings we can actually act on; unfixable advisories
+          # would otherwise wedge the pipeline. Deliberate suppressions live in
+          # .trivyignore.yaml (each one carries a reason and an expiry date).
+          ignore-unfixed: true
+          # Point Trivy at the documented suppressions explicitly. Keep this the
+          # only ignore file in the repo: Trivy errors out when an explicit
+          # ignore file coexists with an implicit .trivyignore in the scan root,
+          # so a stray .trivyignore would break the gate.
+          trivyignores: '.trivyignore.yaml'
           exit-code: '1'
 
   container-and-iac-scan:

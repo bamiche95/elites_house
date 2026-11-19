@@ -1,0 +1,28 @@
+# Trivy suppressions for the DevSecOps pipeline (.github/workflows/devsecops.yml).
+#
+# Wired in explicitly via `trivyignores: '.trivyignore.yaml'` on the filesystem
+# scan, so this file — not an ad-hoc `.trivyignore` — is the only place a
+# vulnerability can be suppressed.
+#
+# CURRENTLY EMPTY ON PURPOSE. Every finding the gate used to report is fixed in
+# the dependency tree, not hidden:
+#   - nodemailer 10.6.0 — clears all 20 advisories that affected 7.x. The
+#     optional `nodemailer` peer of next-auth@4 (^7.0.7) is satisfied by the
+#     scoped override in package.json, so the upgrade does not need
+#     `legacy-peer-deps`.
+#   - deepmerge-ts 8.0.2 — clears GHSA-ggr8-5vv4-36mx; the `overrides` block
+#     lifts it above the 7.1.5 that @prisma/config pins (Prisma CLI validated).
+#
+# To add a suppression:
+#   - id:         the advisory ID (GHSA-… / CVE-…) exactly as Trivy prints it
+#   - statement:  why it is not exploitable here — name the unreachable path
+#   - expired_at: YYYY-MM-DD; after that date Trivy ignores the entry and the
+#                 finding fails the build again, forcing a re-review
+#
+# Suppress only when no fixed version exists or the fix needs a breaking major
+# upgrade; otherwise upgrade the dependency or tighten the override. Verify
+# before and after with:
+#   npm audit --omit=dev   # what ships to production
+#   npm audit              # full tree, including dev tooling
+
+vulnerabilities: []
