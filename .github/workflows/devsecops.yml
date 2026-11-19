@@ -41,12 +41,52 @@ jobs:
   container-and-iac-scan:
     name: Container Hardening & IaC Audit
     runs-on: ubuntu-latest
+    # `next build` prerenders the Prisma-backed pages, so the image build needs a
+    # reachable database. This throwaway instance only exists for the build.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # One throwaway server, two spellings: migrations run on the runner
+      # (`localhost`), while `docker build` reaches the same published port via
+      # the host gateway (see --add-host below).
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/app
+      BUILD_DATABASE_URL: postgresql://postgres:postgres@host.docker.internal:5432/app
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js (for schema migration)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Provision build database schema
+        run: npx prisma migrate deploy
+
       - name: Build Production Docker Image
-        run: docker build -t app-security-check:${{ github.sha }} .
+        run: >
+          docker build
+          --add-host host.docker.internal:host-gateway
+          --build-arg DATABASE_URL="$BUILD_DATABASE_URL"
+          --build-arg DIRECT_URL="$BUILD_DATABASE_URL"
+          -t app-security-check:${{ github.sha }} .
 
       - name: Scan Container Image for CVEs (Trivy)
         uses: aquasecurity/trivy-action@0.36.0

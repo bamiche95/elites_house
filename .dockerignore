@@ -1,0 +1,34 @@
+# Dependencies and build output are produced inside the image. Never send the
+# host's copies: they are platform-specific (the image builds on linux/alpine).
+node_modules
+.next
+out
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Version control, editor and CI metadata
+.git
+.gitignore
+.github
+.vercel
+.vercelignore
+README.md
+
+# Infrastructure-as-code is not needed by the image build
+terraform
+
+# Local development artefacts (uploads are written to Vercel Blob in production)
+public/uploads
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
+public/swe-worker-*.js
+public/fallback-*.js
+*.log
+.DS_Store
+
+# NOTE: `.env*` files are intentionally kept in the build context because
+# `next build` prerenders database-backed pages and needs DATABASE_URL.
+# The Dockerfile's explicit COPY list keeps them out of the runtime image.
