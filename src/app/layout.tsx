@@ -8,6 +8,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { ToastProvider } from "@/components/ui/toast";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/jsonld";
 import { defaultMetadata } from "@/lib/seo";
+import { getStoreContact } from "@/lib/store-settings";
 
 import "./globals.css";
 
@@ -20,7 +21,9 @@ export const viewport: Viewport = {
   themeColor: "#fbf7f1",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const contact = await getStoreContact();
+
   return (
     <html lang="en-GB">
       <body>
@@ -34,10 +37,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <AnnouncementBar />
           <SiteHeader />
           <main id="main">{children}</main>
-          <SiteFooter />
+          <SiteFooter contact={contact} />
           <InstallPrompt />
         </ToastProvider>
-        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
+        <JsonLd data={[organizationJsonLd(contact), websiteJsonLd()]} />
       </body>
     </html>
   );

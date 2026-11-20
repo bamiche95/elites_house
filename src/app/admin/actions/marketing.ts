@@ -10,6 +10,7 @@ import { campaignEmail } from "@/lib/email/templates";
 import { env } from "@/lib/env";
 import { formBool, formOptional, formString } from "@/lib/form";
 import { prisma } from "@/lib/prisma";
+import { getStoreContact } from "@/lib/store-settings";
 import { campaignSchema, emailTemplateSchema } from "@/lib/validators";
 
 function backTo(tab: string, params: Record<string, string> = { saved: "1" }): never {
@@ -115,12 +116,14 @@ export async function sendCampaignAction(formData: FormData) {
 
   let sent = 0;
   let failed = 0;
+  const contact = await getStoreContact();
 
   for (const [email, unsubscribeUrl] of recipients) {
     const content = campaignEmail({
       subject: parsed.data.subject,
       bodyHtml: parsed.data.bodyHtml,
       unsubscribeUrl,
+      contact,
     });
 
     const result = await sendEmail({

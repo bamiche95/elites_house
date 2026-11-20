@@ -80,8 +80,8 @@ export default async function AdminCmsPage({
               href={`/admin/cms?tab=${item.id}`}
               className={
                 tab === item.id
-                  ? "bg-ink px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em] text-ivory"
-                  : "px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em] text-mocha hover:bg-cream hover:text-espresso"
+                  ? "bg-ink px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em] text-ivory font-bold"
+                  : "px-3 py-2 text-[0.62rem] uppercase tracking-[0.14em] text-mocha hover:bg-cream hover:text-espresso font-bold"
               }
             >
               {item.label}
@@ -302,7 +302,7 @@ async function BannersTab({
   return (
     <div className="space-y-4">
       <details className="border border-gold/40 bg-gold/10" open>
-        <summary className="cursor-pointer px-4 py-3 text-[0.62rem] uppercase tracking-[0.16em] text-espresso">
+        <summary className=" font-bold cursor-pointer px-4 py-3 text-[0.62rem] uppercase tracking-[0.16em] text-espresso">
           Add a banner
         </summary>
         <form action={saveBannerAction} className="space-y-4 border-t border-gold/30 p-4">

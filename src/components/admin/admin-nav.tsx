@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, LayoutDashboard, Mail, Package, ShoppingBag, Users } from "lucide-react";
+import { FileText, LayoutDashboard, Mail, Package, Settings, ShoppingBag, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -13,7 +13,9 @@ const links = [
   { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/cms", label: "Content", icon: FileText },
   { href: "/admin/emails", label: "Emails", icon: Mail },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
+
 
 export function AdminNav() {
   const pathname = usePathname();
@@ -34,7 +36,7 @@ export function AdminNav() {
             href={link.href}
             className={cn(
               "flex shrink-0 items-center gap-2.5 px-3 py-2.5 text-[0.68rem] uppercase tracking-[0.14em] transition-colors",
-              active ? "bg-ink text-ivory" : "text-mocha hover:bg-cream hover:text-espresso",
+              active ? "bg-ink text-ivory" : "text-mocha hover:bg-cream hover:text-espresso font-bold",
             )}
           >
             <Icon className="h-4 w-4" />

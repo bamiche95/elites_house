@@ -3,6 +3,7 @@ import { Clock, Mail, MapPin, Phone } from "lucide-react";
 
 import { NewsletterForm } from "@/components/marketing/newsletter-form";
 import { footerNav, siteConfig } from "@/lib/constants";
+import { telHref, type StoreContact } from "@/lib/store-settings";
 
 const columns = [
   { title: "Shop", links: footerNav.shop },
@@ -10,7 +11,7 @@ const columns = [
   { title: "Atelier", links: footerNav.company },
 ];
 
-export function SiteFooter() {
+export function SiteFooter({ contact }: { contact: StoreContact }) {
   return (
     <footer className="mt-24 border-t border-line bg-cream">
       <div className="container-luxe py-16">
@@ -25,29 +26,29 @@ export function SiteFooter() {
 
             <div className="mt-6 space-y-2 text-sm text-mocha">
               <p className="flex items-start gap-2">
-                <MapPin className="mt-0.5 h-4 w-4 text-gold" />
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
                 <span>
-                  {siteConfig.addressLine}, {siteConfig.city} {siteConfig.postcode}
+                  {contact.addressLine}
+                  {contact.addressLine2 ? `, ${contact.addressLine2}` : ""}
+                  <br />
+                  {contact.city} {contact.postcode}, {contact.country}
                 </span>
               </p>
               <p className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-gold" />
-                <a href={`mailto:${siteConfig.supportEmail}`} className="hover:text-espresso">
-                  {siteConfig.supportEmail}
+                <a href={`mailto:${contact.supportEmail}`} className="hover:text-espresso">
+                  {contact.supportEmail}
                 </a>
               </p>
               <p className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-gold" />
-                <a
-                  href={`tel:${siteConfig.supportPhone.replace(/\s/g, "")}`}
-                  className="hover:text-espresso"
-                >
-                  {siteConfig.supportPhone}
+                <a href={telHref(contact.supportPhone)} className="hover:text-espresso">
+                  {contact.supportPhone}
                 </a>
               </p>
               <p className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-gold" />
-                <span>{siteConfig.hours}</span>
+                <span>{contact.hours}</span>
               </p>
             </div>
           </div>
@@ -103,7 +104,7 @@ export function SiteFooter() {
               Returns
             </Link>
             <span className="hidden h-3 w-px bg-line sm:block" />
-            <span>Visa · Mastercard · Amex · Apple Pay · PayPal</span>
+            <span>Visa · Mastercard · Amex · Apple Pay · PayPal · Klarna</span>
           </div>
         </div>
       </div>

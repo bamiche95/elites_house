@@ -2,7 +2,27 @@ import { siteConfig } from "@/lib/constants";
 
 const SITE = siteConfig.url.replace(/\/$/, "");
 
-export function organizationJsonLd() {
+export type OrganizationContact = {
+  supportEmail?: string;
+  supportPhone?: string;
+  addressLine?: string;
+  addressLine2?: string;
+  city?: string;
+  postcode?: string;
+  countryCode?: string;
+  instagram?: string;
+};
+
+/**
+ * Organisation details for JSON-LD. Admin-managed store settings are passed in;
+ * anything omitted falls back to the environment defaults in `siteConfig`.
+ */
+export function organizationJsonLd(contact: OrganizationContact = {}) {
+  const streetAddress = [contact.addressLine ?? siteConfig.addressLine, contact.addressLine2]
+    .filter(Boolean)
+    .join(", ");
+  const instagram = contact.instagram ?? siteConfig.instagram;
+
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -12,16 +32,16 @@ export function organizationJsonLd() {
     logo: `${SITE}/icons/icon-512.png`,
     image: `${SITE}/images/og-default.jpg`,
     description: siteConfig.description,
-    email: siteConfig.supportEmail,
-    telephone: siteConfig.supportPhone,
+    email: contact.supportEmail ?? siteConfig.supportEmail,
+    telephone: contact.supportPhone ?? siteConfig.supportPhone,
     address: {
       "@type": "PostalAddress",
-      streetAddress: siteConfig.addressLine,
-      addressLocality: siteConfig.city,
-      postalCode: siteConfig.postcode,
-      addressCountry: "GB",
+      streetAddress,
+      addressLocality: contact.city ?? siteConfig.city,
+      postalCode: contact.postcode ?? siteConfig.postcode,
+      addressCountry: contact.countryCode ?? "GB",
     },
-    sameAs: [siteConfig.instagram],
+    ...(instagram ? { sameAs: [instagram] } : {}),
   };
 }
 

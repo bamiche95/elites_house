@@ -197,6 +197,27 @@ export const pageSchema = z.object({
   metaDescription: z.string().max(160).optional(),
 });
 
+export const storeContactSchema = z.object({
+  supportEmail: emailField,
+  ordersEmail: emailField,
+  supportPhone: z
+    .string()
+    .min(7, "Enter a contact number")
+    .max(24, "That phone number is too long")
+    .regex(/^[+()\d\s-]+$/, "Enter a valid phone number"),
+  addressLine: z.string().min(3, "Enter the first line of the address").max(120),
+  addressLine2: z.string().max(120, "That address line is too long"),
+  city: z.string().min(2, "Enter a town or city").max(80),
+  postcode: z.string().min(3, "Enter a postcode").max(12),
+  country: z.string().min(2, "Enter a country").max(60),
+  countryCode: z
+    .string()
+    .regex(/^[A-Za-z]{2}$/, "Use the two-letter country code, e.g. GB")
+    .transform((value) => value.toUpperCase()),
+  hours: z.string().min(3, "Enter your opening hours").max(120),
+  instagram: z.union([z.literal(""), z.string().url("Enter the full Instagram URL")]),
+});
+
 export const faqSchema = z.object({
   id: z.string().optional(),
   question: z.string().min(5, "Question is required").max(200),

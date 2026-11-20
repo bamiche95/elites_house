@@ -6,6 +6,7 @@ import { welcomeEmail } from "@/lib/email/templates";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { getStoreContact } from "@/lib/store-settings";
 import { registerSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -68,9 +69,11 @@ export async function POST(request: Request) {
       });
     }
 
+    const contact = await getStoreContact();
     const content = welcomeEmail({
       name: user.name,
       unsubscribeUrl: `${env.siteUrl.replace(/\/$/, "")}/unsubscribe/${user.unsubscribeToken}`,
+      contact,
     });
 
     await sendEmail({

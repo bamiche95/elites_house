@@ -4,9 +4,9 @@ import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { ContactForm } from "@/components/marketing/contact-form";
 import { JsonLd } from "@/components/seo/json-ld";
-import { siteConfig } from "@/lib/constants";
 import { breadcrumbJsonLd, organizationJsonLd } from "@/lib/jsonld";
 import { buildMetadata } from "@/lib/seo";
+import { getStoreContact, storeAddressLines, telHref } from "@/lib/store-settings";
 
 export const metadata: Metadata = buildMetadata({
   title: "Contact the atelier",
@@ -15,7 +15,10 @@ export const metadata: Metadata = buildMetadata({
   path: "/contact",
 });
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const contact = await getStoreContact();
+  const addressLines = storeAddressLines(contact);
+
   return (
     <>
       <section className="border-b border-line bg-cream py-10 sm:py-14">
@@ -37,8 +40,8 @@ export default function ContactPage() {
           <h2 className="font-display text-2xl text-espresso">Send a message</h2>
           <p className="mt-1 text-sm text-mocha">
             Prefer email? Write to{" "}
-            <a href={`mailto:${siteConfig.supportEmail}`} className="underline underline-offset-2">
-              {siteConfig.supportEmail}
+            <a href={`mailto:${contact.supportEmail}`} className="underline underline-offset-2">
+              {contact.supportEmail}
             </a>
             .
           </p>
@@ -59,31 +62,28 @@ export default function ContactPage() {
             <li className="flex gap-3">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
               <span>
-                {siteConfig.addressLine}
-                <br />
-                {siteConfig.city} {siteConfig.postcode}
-                <br />
-                {siteConfig.country}
+                {addressLines.map((line, index) => (
+                  <span key={`${index}-${line}`} className="block">
+                    {line}
+                  </span>
+                ))}
               </span>
             </li>
             <li className="flex gap-3">
               <Mail className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-              <a href={`mailto:${siteConfig.supportEmail}`} className="hover:text-espresso">
-                {siteConfig.supportEmail}
+              <a href={`mailto:${contact.supportEmail}`} className="hover:text-espresso">
+                {contact.supportEmail}
               </a>
             </li>
             <li className="flex gap-3">
               <Phone className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-              <a
-                href={`tel:${siteConfig.supportPhone.replace(/\s/g, "")}`}
-                className="hover:text-espresso"
-              >
-                {siteConfig.supportPhone}
+              <a href={telHref(contact.supportPhone)} className="hover:text-espresso">
+                {contact.supportPhone}
               </a>
             </li>
             <li className="flex gap-3">
               <Clock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-              <span>{siteConfig.hours}</span>
+              <span>{contact.hours}</span>
             </li>
           </ul>
 
@@ -95,13 +95,19 @@ export default function ContactPage() {
               Include your order number (starts with LT-) so we can help faster. For returns,
               tell us whether the hair is still sealed.
             </p>
+            <a
+              href={`mailto:${contact.ordersEmail}`}
+              className="mt-3 inline-block text-xs text-espresso underline underline-offset-2"
+            >
+              {contact.ordersEmail}
+            </a>
           </div>
         </aside>
       </section>
 
       <JsonLd
         data={[
-          organizationJsonLd(),
+          organizationJsonLd(contact),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
             { name: "Contact", path: "/contact" },

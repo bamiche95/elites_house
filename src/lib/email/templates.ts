@@ -3,6 +3,7 @@ import "server-only";
 import type { Order, OrderItem } from "@prisma/client";
 
 import { siteConfig } from "@/lib/constants";
+import { defaultStoreContact, type StoreContact } from "@/lib/store-settings";
 import { formatMoneyExact } from "@/lib/utils";
 
 import {
@@ -38,6 +39,8 @@ type LayoutOptions = {
   content: string;
   footerNote?: string;
   unsubscribeUrl?: string;
+  /** Admin-managed address and contact details; defaults to the environment values. */
+  contact?: StoreContact;
 };
 
 export function emailLayout({
@@ -46,10 +49,19 @@ export function emailLayout({
   content,
   footerNote,
   unsubscribeUrl,
+  contact,
 }: LayoutOptions) {
   const year = new Date().getFullYear();
   const footerLink = `color:${C.mocha};text-decoration:none;`;
-  const address = `${siteConfig.addressLine}, ${siteConfig.city} ${siteConfig.postcode}, ${siteConfig.country}`;
+  const details = contact ?? defaultStoreContact;
+  const address = [
+    details.addressLine,
+    details.addressLine2,
+    [details.city, details.postcode].filter(Boolean).join(" "),
+    details.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return `<!doctype html>
 <html lang="en" style="color-scheme:light only;">
@@ -109,11 +121,11 @@ export function emailLayout({
                 )}</p>
                 <p style="margin:0 0 12px;">${escapeHtml(address)}</p>
                 <p style="margin:0 0 6px;">
-                  <a href="mailto:${escapeHtml(siteConfig.supportEmail)}" style="${footerLink}">${escapeHtml(
-                    siteConfig.supportEmail,
+                  <a href="mailto:${escapeHtml(details.supportEmail)}" style="${footerLink}">${escapeHtml(
+                    details.supportEmail,
                   )}</a> &middot;
-                  <a href="tel:${siteConfig.supportPhone.replace(/\s/g, "")}" style="${footerLink}">${escapeHtml(
-                    siteConfig.supportPhone,
+                  <a href="tel:${details.supportPhone.replace(/\s/g, "")}" style="${footerLink}">${escapeHtml(
+                    details.supportPhone,
                   )}</a>
                 </p>
                 <p style="margin:0 0 6px;">
@@ -126,7 +138,11 @@ export function emailLayout({
                   }
                 </p>
                 <p style="margin:0 0 14px;">
-                  <a href="${siteConfig.instagram}" style="${footerLink}">Instagram</a> &middot;
+                  ${
+                    details.instagram
+                      ? `<a href="${escapeHtml(details.instagram)}" style="${footerLink}">Instagram</a> &middot;`
+                      : ""
+                  }
                   <a href="${SITE}/contact" style="${footerLink}">Contact the atelier</a>
                 </p>
                 <p style="margin:0;padding-top:14px;border-top:1px solid ${C.line};font-size:11px;line-height:1.6;color:#9a8877;">
@@ -205,12 +221,14 @@ export type OrderEmailOptions = {
   order: EmailOrder;
   setupUrl?: string;
   unsubscribeUrl?: string;
+  contact?: StoreContact;
 };
 
 export function orderConfirmationEmail({
   order,
   setupUrl,
   unsubscribeUrl,
+  contact,
 }: OrderEmailOptions): EmailContent {
   const firstName = order.customerName.split(" ")[0] || "there";
   const content = `
@@ -255,6 +273,7 @@ export function orderConfirmationEmail({
       content,
       footerNote: "Keep this email for your records.",
       unsubscribeUrl,
+      contact,
     }),
   };
 }
@@ -317,6 +336,7 @@ export type OrderStatusEmailOptions = {
   status: string;
   note?: string;
   unsubscribeUrl?: string;
+  contact?: StoreContact;
 };
 
 export function orderStatusEmail({
@@ -324,6 +344,7 @@ export function orderStatusEmail({
   status,
   note,
   unsubscribeUrl,
+  contact,
 }: OrderStatusEmailOptions): EmailContent {
   const copy = STATUS_COPY[status] ?? {
     subject: "Your order has been updated",
@@ -377,6 +398,7 @@ export function orderStatusEmail({
       content,
       footerNote: "You're receiving this because you placed an order with us.",
       unsubscribeUrl,
+      contact,
     }),
   };
 }
@@ -384,9 +406,11 @@ export function orderStatusEmail({
 export function welcomeEmail({
   name,
   unsubscribeUrl,
+  contact,
 }: {
   name?: string | null;
   unsubscribeUrl?: string;
+  contact?: StoreContact;
 }): EmailContent {
   const firstName = (name ?? "").split(" ")[0] || "lovely";
   const content = `
@@ -424,6 +448,7 @@ export function welcomeEmail({
       content,
       footerNote: "You're receiving this because you created an account with us.",
       unsubscribeUrl,
+      contact,
     }),
   };
 }
@@ -432,10 +457,12 @@ export function campaignEmail({
   subject,
   bodyHtml,
   unsubscribeUrl,
+  contact,
 }: {
   subject: string;
   bodyHtml: string;
   unsubscribeUrl: string;
+  contact?: StoreContact;
 }): EmailContent {
   return {
     subject,
@@ -445,11 +472,18 @@ export function campaignEmail({
       content: `<div style="font-family:${F.sans};font-size:15px;line-height:1.7;color:${C.espresso};">${bodyHtml}</div>`,
       footerNote: "You're receiving this because you opted in to The Elites House emails.",
       unsubscribeUrl,
+      contact,
     }),
   };
 }
 
-export function adminOrderEmail({ order }: { order: EmailOrder }): EmailContent {
+export function adminOrderEmail({
+  order,
+  contact,
+}: {
+  order: EmailOrder;
+  contact?: StoreContact;
+}): EmailContent {
   const items = order.items.map(
     (item) =>
       `<strong style="color:${C.ink};">${escapeHtml(item.name)}</strong><br /><span style="color:${C.mocha};font-size:13px;">${escapeHtml(
@@ -479,16 +513,18 @@ export function adminOrderEmail({ order }: { order: EmailOrder }): EmailContent 
 
   return {
     subject: `New order ${order.orderNumber} — ${formatMoneyExact(order.totalPence, order.currency)}`,
-    html: emailLayout({ title: `New order ${order.orderNumber}`, content }),
+    html: emailLayout({ title: `New order ${order.orderNumber}`, content, contact }),
   };
 }
 
 export function guestSetupReminderEmail({
   name,
   setupUrl,
+  contact,
 }: {
   name?: string | null;
   setupUrl: string;
+  contact?: StoreContact;
 }): EmailContent {
   const firstName = (name ?? "").split(" ")[0] || "there";
   return {
@@ -509,6 +545,7 @@ export function guestSetupReminderEmail({
           "0",
         )}
       `,
+      contact,
     }),
   };
 }

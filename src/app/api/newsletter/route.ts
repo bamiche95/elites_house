@@ -5,6 +5,7 @@ import { campaignEmail } from "@/lib/email/templates";
 import { env, isEmailConfigured } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { getStoreContact } from "@/lib/store-settings";
 import { newsletterSchema } from "@/lib/validators";
 
 export const runtime = "nodejs";
@@ -35,10 +36,12 @@ export async function POST(request: Request) {
     });
 
     if (isEmailConfigured) {
+      const contact = await getStoreContact();
       const content = campaignEmail({
         subject: "You're on the atelier list",
         bodyHtml: `<p>Hi there,</p><p>Thank you for joining The Elites House list. Expect one considered email a fortnight: restocks, styling notes and first access to new batches.</p><p>In the meantime, start with our <a href="${env.siteUrl}/hair-care">hair care guide</a>.</p><p>— The atelier</p>`,
         unsubscribeUrl: `${env.siteUrl.replace(/\/$/, "")}/unsubscribe/${subscriber.token}`,
+        contact,
       });
       await sendEmail({
         to: email,

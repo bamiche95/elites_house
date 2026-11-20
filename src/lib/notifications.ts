@@ -9,6 +9,7 @@ import {
   orderStatusEmail,
 } from "@/lib/email/templates";
 import { prisma } from "@/lib/prisma";
+import { getStoreContact } from "@/lib/store-settings";
 import { generateToken, hashToken, hoursFromNow } from "@/lib/tokens";
 
 function unsubscribeUrl(token?: string | null) {
@@ -42,10 +43,12 @@ export async function notifyOrderConfirmation(orderId: string) {
     setupUrl = await createSetupLink(order.user.id);
   }
 
+  const contact = await getStoreContact();
   const { subject, html } = orderConfirmationEmail({
     order,
     setupUrl,
     unsubscribeUrl: unsubscribeUrl(order.user?.unsubscribeToken),
+    contact,
   });
 
   await sendEmail({
@@ -56,7 +59,7 @@ export async function notifyOrderConfirmation(orderId: string) {
     userId: order.userId ?? undefined,
   });
 
-  const admin = adminOrderEmail({ order });
+  const admin = adminOrderEmail({ order, contact });
   await sendAdminNotification(admin.subject, admin.html);
 }
 
@@ -67,11 +70,13 @@ export async function notifyOrderStatus(orderId: string, status: string, note?: 
   });
   if (!order) return;
 
+  const contact = await getStoreContact();
   const { subject, html } = orderStatusEmail({
     order,
     status,
     note,
     unsubscribeUrl: unsubscribeUrl(order.user?.unsubscribeToken),
+    contact,
   });
 
   await sendEmail({
@@ -87,7 +92,8 @@ export async function notifyGuestSetup(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return;
   const setupUrl = await createSetupLink(user.id);
-  const { subject, html } = guestSetupReminderEmail({ name: user.name, setupUrl });
+  const contact = await getStoreContact();
+  const { subject, html } = guestSetupReminderEmail({ name: user.name, setupUrl, contact });
   await sendEmail({
     to: user.email,
     subject,
