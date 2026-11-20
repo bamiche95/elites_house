@@ -12,6 +12,11 @@
 #     `legacy-peer-deps`.
 #   - deepmerge-ts 8.0.2 — clears GHSA-ggr8-5vv4-36mx; the `overrides` block
 #     lifts it above the 7.1.5 that @prisma/config pins (Prisma CLI validated).
+#   - effect 3.22.5 — clears GHSA-7589-6fvf-x4pw (ReDoS in
+#     Schema.TemplateLiteral, fixed in 3.22.1). @prisma/config pins effect
+#     3.21.0 exactly and no newer Prisma release widens that, so the `overrides`
+#     block lifts it; the dependency set is unchanged, so it is a drop-in
+#     version bump (Prisma CLI validated against 3.22.5).
 #
 # To add a suppression:
 #   - id:         the advisory ID (GHSA-… / CVE-…) exactly as Trivy prints it
